@@ -9,4 +9,16 @@ class UserLog extends Model
 {
     /** @use HasFactory<\Database\Factories\UserLogFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'action',
+        'ip_address',
+        'device_info',
+        'status'
+    ];
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }
