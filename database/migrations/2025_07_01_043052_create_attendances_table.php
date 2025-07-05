@@ -20,7 +20,7 @@ return new class extends Migration
                 'present', 'absent', 'late'
             ]);
             $table->dateTime('check_in_time');
-            $table->text('notes');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

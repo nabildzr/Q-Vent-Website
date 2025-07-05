@@ -9,4 +9,14 @@ class EventPhoto extends Model
 {
     /** @use HasFactory<\Database\Factories\EventPhotoFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'event_id',
+        'photo'
+    ];
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
 }

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'role',
         'password',
+        'phone_number'
     ];
 
     /**
@@ -45,5 +46,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function logs() {
+        return $this->hasMany(UserLog::class);
+    }
+
+    public function eventAdminAssigned() {
+        return $this->hasMany(EventAdmin::class);
+    }
+
+    public function createdEvents() {
+        return $this->hasMany(Event::class);
     }
 }
