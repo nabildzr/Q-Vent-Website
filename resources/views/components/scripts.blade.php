@@ -1,13 +1,4 @@
-<!--scripts -->
-<script src="./assets/js/jquery-3.6.0.min.js"></script>
-<script src="./assets/js/aos.js"></script>
-<script src="./assets/js/slick.min.js"></script>
-<script>
-    AOS.init();
-</script>
-{{-- Dashboard --}}
-<script src="./assets/js/quill.min.js"></script>
-<script src="./assets/js/main.js"></script>
-<script src="./assets/js/chart.js"></script>
+<script type="text/javascript" src="assets/scripts/vendors/jquery-3.6.0.min.js"></script>
 
 {{ $script }}
+<script src="assets/scripts/app.js?v=5.0"></script>
