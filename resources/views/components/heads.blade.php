@@ -13,4 +13,5 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&amp;family=Noto+Sans:wght@400;500;600;700;800&amp;display=swap">
 
     {{ $head }}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
