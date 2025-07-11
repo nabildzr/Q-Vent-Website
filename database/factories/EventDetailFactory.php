@@ -2,22 +2,25 @@
 
 namespace Database\Factories;
 
+use App\Models\Event;
+use App\Models\EventDetail;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\EventDetail>
- */
 class EventDetailFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
+
+        $isVirtual = $this->faker->boolean();
+
         return [
-            //
+            'event_id' => Event::inRandomOrder()->first()?->id ?? Event::factory(),
+            'participant_count' => $this->faker->numberBetween(50, 500),
+            'registration_link' => $this->faker->url(),
+            'is_virtual' => $isVirtual,
+            'platform_url' => $isVirtual ? $this->faker->url() : '-',
+            'agenda' => $this->faker->paragraph(),
         ];
+
     }
 }
