@@ -21,6 +21,10 @@ class Event extends Model
         'banner'
     ];
 
+    protected $casts = [
+        'start_date' => 'datetime',
+    ];
+
     public function attendees()
     {
         return $this->hasMany(Attendee::class);

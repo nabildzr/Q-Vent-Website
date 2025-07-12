@@ -1,3 +1,22 @@
+<<<<<<< HEAD
+<!-- meta tags and other links -->
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <x-head />
+
+  <body>
+    <x-sidebar />
+
+    <main class="dashboard-main">
+      <x-navbar />
+
+      @yield('content')
+
+      <x-footer />
+    </main>
+
+    <x-script/>
+=======
 <!DOCTYPE html>
 <html class="scroll-smooth overflow-x-hidden" lang="en">
     <x-heads>
@@ -33,5 +52,6 @@
             @stack('script')
         </x-slot:script>
     </x-scripts>
+>>>>>>> 3297bc6d97ef58cc42acece89cf820f3a43d037b
   </body>
 </html>

@@ -10,6 +10,8 @@ class QRCode extends Model
     /** @use HasFactory<\Database\Factories\QRCodeFactory> */
     use HasFactory;
 
+    protected $table = 'qr_codes';
+
     protected $fillable = [
         'event_id',
         'attendee_id',
