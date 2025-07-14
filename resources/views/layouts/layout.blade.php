@@ -23,7 +23,7 @@
 
     <x-script> 
       <x-slot:script>
-        @yield('scripts')
+        @yield('script')
       </x-slot:script>
     </x-script>
   </body>

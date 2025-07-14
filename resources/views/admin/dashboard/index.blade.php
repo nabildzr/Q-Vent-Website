@@ -6,6 +6,7 @@
     <div class="dashboard-main-body">
         <x-breadcrumb>
             <x-slot:title>Dashboard</x-slot:title>
+            <x-slot:icon>solar:home-smile-angle-outline</x-slot:icon>
         </x-breadcrumb>
 
         <div class="row row-cols-xxxl-5 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4">

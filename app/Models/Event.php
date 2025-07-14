@@ -40,24 +40,27 @@ class Event extends Model
         return $this->hasMany(EventAdmin::class);
     }
 
-    public function creator()
+    public function createdBy()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function eventDetail() {
+    public function eventDetail()
+    {
         return $this->hasOne(EventDetail::class);
     }
 
-    public function eventPhotos() {
+    public function eventPhotos()
+    {
         return $this->hasMany(EventPhoto::class);
     }
 
-    public function eventRegistrationLink() {
+    public function eventRegistrationLink()
+    {
         return $this->hasMany(EventRegistrationLink::class);
     }
 
-    // public function eventCategory() {
-    //     return $this->hasOne(EventCategory::class);
-    // }
+    public function eventCategory() {
+        return $this->belongsTo(EventCategory::class, 'event_category_id');
+    }
 }
