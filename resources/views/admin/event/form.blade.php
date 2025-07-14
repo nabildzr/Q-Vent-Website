@@ -77,9 +77,12 @@
                             <label class="form-label">Status</label>
                             <select name="status" class="form-select" required>
                                 <option value="">Pilih Status</option>
-                                <option value="active" {{ old('status', $event->status) == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="done" {{ old('status', $event->status) == 'done' ? 'selected' : '' }}>Done</option>
-                                <option value="cancelled" {{ old('status', $event->status) == 'cancelled' ? 'selected' : '' }}>Cancellad</option>
+                                <option value="active" {{ old('status', $event->status) == 'active' ? 'selected' : '' }}>
+                                    Active</option>
+                                <option value="done" {{ old('status', $event->status) == 'done' ? 'selected' : '' }}>Done
+                                </option>
+                                <option value="cancelled"
+                                    {{ old('status', $event->status) == 'cancelled' ? 'selected' : '' }}>Cancellad</option>
                             </select>
                             @error('status')
                                 <div style="color:red">{{ $message }}</div>
@@ -87,10 +90,10 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Pembuat</label>
+                            <label class="form-label">Administrator Event</label>
                             <select name="created_by" class="form-select" required>
-                                <option value="">Pilih Pembuat</option>
-                                @foreach (\App\Models\User::all() as $user)
+                                <option value="">Pilih Administrator Event</option>
+                                @foreach (\App\Models\User::where('role', 'admin')->get() as $user)
                                     <option value="{{ $user->id }}"
                                         {{ old('created_by', $event->created_by) == $user->id ? 'selected' : '' }}>
                                         {{ $user->name }}
@@ -104,16 +107,72 @@
 
                         <div class="col-md-12">
                             <label class="form-label">Banner (optional)</label>
-                            <input type="file" name="banner" class="form-control">
+                            <input type="file" name="banner" onchange="previewPhoto(event)" class="form-control">
                             @if ($isEdit && $event->banner)
                                 <div class="mt-2">
                                     <img src="{{ asset('storage/' . $event->banner) }}" height="100" alt="Banner">
                                 </div>
                             @endif
+
+
+
+
                             @error('banner')
                                 <div style="color:red">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <div class="col-md-12">
+                            <div class="mt-2">
+                                <img src="{{ asset('storage/' . $event->banner) }}" height="100" alt="Banner"
+                                    id="photo-preview" class="img-fluid img-thumbnail photo-preview"
+                                    style="{{ $event->banner ? '' : 'display:none;' }}; 
+                                        max-width: 300px;
+                                        max-height: 150px;
+                                        margin-top: 10px;
+                                    " />
+
+
+                            </div>
+                        </div>
+
+                        <script>
+                            // preview while creating/updating (upload)
+                            function previewPhoto(event) {
+                                const input = event.target;
+                                const preview = document.getElementById('photo-preview');
+                                const inputText = document.getElementById('input-text');
+                                if (input.files && input.files[0]) {
+                                    const reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        preview.src = e.target.result;
+                                        preview.style.display = 'block';
+                                        inputText.style.display = 'block';
+                                    }
+                                    reader.readAsDataURL(input.files[0]);
+                                } else {
+                                    preview.src = '#';
+                                    preview.style.display = 'none';
+                                    preview.style.display = 'none';
+                                }
+                            }
+
+                            function previewImage(event) {
+                                const input = event.input
+                                const preview = document.getElementById('photo-preview')
+                                if (input.files && input.files[0]) {
+                                    const reader = new FileReader()
+                                    reader.onload = (e) => {
+                                        preview.src = e.target.result;
+                                        preview.style.display = 'block'
+                                    }
+                                    reader.readAsDataURL(input.files[0])
+                                } else {
+                                    preview.src = ''
+                                    preview.style.display = 'none'
+                                }
+                            }
+                        </script>
 
                         <div class="col-md-12">
                             <button class="btn btn-primary-600" type="submit">{{ $isEdit ? 'Update' : 'Simpan' }}</button>

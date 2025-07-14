@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
     public function index()
     {
         $events = Event::all();
-        return view('admin.event.index', compact('events'));
+        return view('admin.event.index')->with([
+            'events' => $events
+        ]);
     }
 
     public function create()
@@ -41,7 +44,7 @@ class EventController extends Controller
             $bannerPath = $request->file('banner')->store('banners', 'public');
 
             // Cek apakah benar-benar tersimpan
-            if (!\Storage::disk('public')->exists($bannerPath)) {
+            if (!Storage::disk('public')->exists($bannerPath)) {
                 return back()
                     ->withErrors(['banner' => 'Gagal menyimpan gambar banner. Coba lagi.'])
                     ->withInput();
@@ -89,14 +92,14 @@ class EventController extends Controller
         $bannerPath = $event->banner;
 
         if ($request->hasFile('banner')) {
-            if ($event->banner && \Storage::disk('public')->exists($event->banner)) {
-                \Storage::disk('public')->delete($event->banner);
+            if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+                Storage::disk('public')->delete($event->banner);
             }
 
             $bannerPath = $request->file('banner')->store('banners', 'public');
 
             // Cek tersimpan atau tidak
-            if (!\Storage::disk('public')->exists($bannerPath)) {
+            if (!Storage::disk('public')->exists($bannerPath)) {
                 return back()
                     ->withErrors(['banner' => 'Gagal menyimpan gambar banner baru. Coba lagi.'])
                     ->withInput();

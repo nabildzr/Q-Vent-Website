@@ -9,17 +9,7 @@
             <x-slot:icon>material-symbols:category-search-outline-rounded</x-slot:icon>
         </x-breadcrumb>
 
-        @if (session('success'))
-            <div class="alert alert-success bg-success-100 text-success-600 border-success-600 border-start-width-4-px border-top-0 border-end-0 border-bottom-0 px-24 py-13 mb-12 fw-semibold text-lg radius-4 d-flex align-items-center justify-content-between"
-                role="alert">
-                <div class="d-flex align-items-center gap-2">
-                    <iconify-icon icon="akar-icons:double-check" class="icon text-xl"></iconify-icon>
-                    {{ session('success') }}
-                </div>
-                <button class="remove-button text-success-600 text-xxl line-height-1"> <iconify-icon
-                        icon="iconamoon:sign-times-light" class="icon"></iconify-icon></button>
-            </div>
-        @endif
+        @include('layouts.feedback')
 
         <div class="card basic-data-table">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -31,9 +21,9 @@
                 <table class="table bordered-table mb-0" id="dataTable" data-page-length='10'>
                     <thead>
                         <tr>
-                            <th scope="col">No</th>
-                            <th scope="col">Nama Kategori</th>
-                            <th scope="col">Aksi</th>
+                            <th>No</th>
+                            <th>Nama Kategori</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,15 +36,12 @@
                                         class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center">
                                         <iconify-icon icon="lucide:edit"></iconify-icon>
                                     </a>
-                                    <form action="{{ route('admin.event_category.destroy', $category->id) }}" method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus kategori ini?')"
-                                        class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit">
+                                    <a href="#" class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
+                                        <button type="submit" class="inline-block" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal-{{ $category->id }}">
                                             <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                         </button>
-                                    </form>
+                                    </a>
                                 </td>
                             </tr>
                         @endforeach
@@ -69,9 +56,38 @@
             </div>
         </div>
     </div>
+
+
+    @foreach ($categories as $category)
+        <div class="modal fade" id="deleteModal-{{ $category->id }}" tabindex="-1"
+            aria-labelledby="deleteModalLabel-{{ $category->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog modal-dialog-centered">
+                <div class="modal-content radius-16 bg-base">
+                    <div class="modal-header py-16 px-24 border border-top-0 border-start-0 border-end-0">
+                        <h1 class="modal-title fs-5" id="deleteModalLabel-{{ $category->id }}">Hapus Kategori</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-24">
+                        <div class="d-flex flex-column gap-8">
+                            <p>Apakah Anda yakin ingin menghapus kategori "{{ $category->name }}"?</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-16 px-24 border border-top-0 border-start-0 border-end-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <form action="{{ route('admin.event_category.destroy', $category->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">Hapus</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
 @endsection
 
-@section('script')
+@section('beforeAppScripts')
     <script>
         let table = new DataTable('#dataTable');
     </script>

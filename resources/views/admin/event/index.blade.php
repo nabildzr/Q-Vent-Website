@@ -9,17 +9,15 @@
             <x-slot:icon>solar:calendar-add-broken</x-slot:icon>
         </x-breadcrumb>
 
-        @if (session('success'))
-            <div style="color: green">{{ session('success') }}</div>
-        @endif
+      
 
         <div class="card basic-data-table">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Daftar Event</h5>
                 <a href="{{ route('admin.event.create') }}" class="btn btn-primary-600 radius-8 px-16 py-9">+ Tambah Event</a>
             </div>
-            <div class="card-body">
-                <table class="table bordered-table mb-0" id="dataTable" data-page-length='10'>
+            <div class="card-body" >
+                <table class="table bordered-table mb-0" id="dataTable" data-page-length='10' style="overflow-x: auto;">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -37,14 +35,24 @@
                     <tbody>
                         @forelse ($events as $event)
                             <tr>
-                                <td>{{ $event->id }}</td>
+                            <td>{{ $event->id }}</td>
                                 <td>{{ Str::limit($event->title, 10) }}</td>
                                 <td>{{ Str::limit($event->description, 10) }}</td>
                                 <td>{{ Str::limit($event->location, 10) }}</td>
                                 <td>{{ $event->eventCategory->name ?? '-' }}</td>
                                 <td>{{ $event->createdBy->name ?? '-' }}</td>
                                 <td>
-                                    <span class="badge {{ $event->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
+                                    <span class="
+                                        @if ($event->status === 'active')
+                                            bg-success-focus text-success-600
+                                        @elseif ($event->status === 'done')
+                                            bg-primary-100 text-primary-600
+                                        @elseif ($event->status === 'cancelled')
+                                            bg-danger-focus text-danger-600
+                                        @else
+                                            bg-secondary text-secondary-600
+                                        @endif
+                                        px-16 py-6 rounded-pill fw-semibold text-xs">
                                         {{ ucfirst($event->status) }}
                                     </span>
                                 </td>
@@ -83,7 +91,7 @@
     </div>
 @endsection
 
-@section('script')
+@section('beforeAppScripts')
 
     <script>
         let table = new DataTable('#dataTable');

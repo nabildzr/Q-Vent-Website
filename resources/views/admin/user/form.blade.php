@@ -90,11 +90,11 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Role</label>
-                            <div class="icon-field has-validation">
-                                <span class="icon">
+                            <div class="icon-field has-validation" style="position: relative;">
+                                <span class="icon" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%);">
                                     <iconify-icon icon="eos-icons:role-binding-outlined"></iconify-icon>
                                 </span>
-                                <select name="role" class="form-select" required>
+                                <select name="role" class="form-select" style="padding-left: 40px;" required>
                                     <option value="" class="">Pilih Role</option>
                                     <option value="super_admin"
                                         {{ old('role', $user->role) == 'super_admin' ? 'selected' : '' }}>Super Admin

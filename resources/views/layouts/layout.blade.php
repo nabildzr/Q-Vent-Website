@@ -22,9 +22,12 @@
     </main>
 
     <x-script> 
-      <x-slot:script>
-        @yield('script')
-      </x-slot:script>
+      <x-slot:beforeAppScripts>
+        @yield('beforeAppScripts')
+      </x-slot:beforeAppScripts>
+      <x-slot:afterAppScripts>
+        @yield('afterAppScripts')
+      </x-slot:afterAppScripts>
     </x-script>
   </body>
 </html>

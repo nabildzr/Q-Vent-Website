@@ -23,10 +23,8 @@
     <script src="{{ asset('assets/js/lib/file-upload.js') }}"></script>
     <!-- audioplayer -->
     <script src="{{ asset('assets/js/lib/audioplayer.js') }}"></script>
+    {{ $beforeAppScripts }}
 
     <!-- main js -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
-
-    <script src="{{ asset('assets/js/homeOneChart.js') }}"></script>
-
-    {{ $script }}
+    {{ $afterAppScripts }}

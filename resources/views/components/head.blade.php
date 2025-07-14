@@ -39,4 +39,5 @@
     <link rel="stylesheet" href="{{ asset('assets/css/lib/audioplayer.css') }}" />
     <!-- main css -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>

@@ -787,5 +787,6 @@
     </div>
 @endsection
 
-@push('scripts')
+@push('afterAppScripts')
+    <script src="{{ asset('assets/js/homeOneChart.js') }}"></script>
 @endpush
