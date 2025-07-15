@@ -7,7 +7,7 @@
         <x-breadcrumb>
             <x-slot:title>{{ $isEdit ? 'Edit User' : 'Tambah User' }}</x-slot:title>
             <x-slot:icon>solar:shield-user-broken</x-slot:icon>
-        </x-breadcrumb> 
+        </x-breadcrumb>
 
         <div class="col-lg-12">
             <div class="card">
@@ -92,7 +92,7 @@
                             <label class="form-label">Role</label>
                             <div class="icon-field has-validation" style="position: relative;">
                                 <span class="icon" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%);">
-                                    <iconify-icon icon="eos-icons:role-binding-outlined"></iconify-icon>
+                                    <iconify-icon icon="oui:app-users-roles"></iconify-icon>
                                 </span>
                                 <select name="role" class="form-select" style="padding-left: 40px;" required>
                                     <option value="" class="">Pilih Role</option>

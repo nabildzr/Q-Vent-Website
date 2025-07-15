@@ -17,7 +17,7 @@
                     <span>Dashboard</span>
                 </a>
             </li>
-            
+
             <li class="">
                 <a href="{{ route('admin.user.index') }}">
                     <iconify-icon icon="solar:shield-user-broken" class="menu-icon"></iconify-icon>
@@ -27,11 +27,11 @@
 
             <li class="">
                 <a href="{{ route('admin.event_category.index') }}">
-                    <iconify-icon icon="material-symbols:category-search-outline-rounded" class="menu-icon"></iconify-icon>
+                    <iconify-icon icon="iconamoon:category-light" class="menu-icon"></iconify-icon>
                     <span>Event Category</span>
                 </a>
             </li>
-            
+
             <li class="">
                 <a href="{{ route('admin.event.index') }}">
                     <iconify-icon icon="solar:calendar-add-broken" class="menu-icon"></iconify-icon>
