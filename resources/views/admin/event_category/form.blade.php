@@ -6,7 +6,7 @@
     <div class="dashboard-main-body">
         <x-breadcrumb>
             <x-slot:title>{{ $isEdit ? 'Edit Kategori Event' : 'Tambah Kategori Event' }}</x-slot:title>
-            <x-slot:icon>material-symbols:category-search-outline-rounded</x-slot:icon>
+            <x-slot:icon>iconamoon:category-light</x-slot:icon>
         </x-breadcrumb>
 
         <div class="col-lg-12">

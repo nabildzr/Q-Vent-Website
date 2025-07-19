@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
+use App\Models\EventPhoto;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
@@ -20,7 +22,8 @@ class EventController extends Controller
     {
         return view('admin.event.form', [
             'event' => new Event(), // kalo create, kita buat instance baru
-            'isEdit' => false // menandakan ini adalah form untuk membuat event baru
+            'isEdit' => false, // menandakan ini adalah form untuk membuat event baru
+            'users' => User::all(),
         ]);
     }
 
@@ -35,6 +38,9 @@ class EventController extends Controller
             'status' => 'required|in:active,done,cancelled',
             'start_date' => 'required|date',
             'banner' => 'nullable|image|max:2048',
+            'admins' => 'nullable|array',
+            'admins.*' => 'exists:users,id',
+            'photos.*' => 'nullable|image|max:2048',
         ]);
 
         $bannerPath = null;
@@ -51,7 +57,7 @@ class EventController extends Controller
             }
         }
 
-        Event::create([
+        $event = Event::create([
             'title' => $request->title,
             'description' => $request->description,
             'location' => $request->location,
@@ -65,6 +71,25 @@ class EventController extends Controller
         EventPhoto::create();
 
 
+        // Simpan admin pendamping (jika ada)
+        if ($request->has('admins')) {
+            $event->admins()->sync($request->admins); // event_admins pivot
+        }
+
+        // Tambah foto baru (jika diupload) menggunakan EventPhoto::create
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+            if ($photo->isValid()) {
+                $photoPath = $photo->store('event_photos', 'public');
+                EventPhoto::create([
+                'event_id' => $event->id,
+                'photo' => $photoPath,
+                ]);
+            }
+            }
+        }
+
+
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil ditambahkan.');
     }
 
@@ -73,7 +98,8 @@ class EventController extends Controller
         $event = Event::findOrFail($id);
         return view('admin.event.form', [
             'event' => $event, // kalo edit, kita ambil data event yang ada
-            'isEdit' => true // menandakan ini adalah form untuk mengedit event yang sudah ada
+            'isEdit' => true, // menandakan ini adalah form untuk mengedit event yang sudah ada
+            'users' => User::all(),
         ]);
     }
 
@@ -90,6 +116,9 @@ class EventController extends Controller
             'status' => 'required|in:active,done,cancelled',
             'start_date' => 'required|date',
             'banner' => 'nullable|image|max:2048',
+            'admins' => 'nullable|array',
+            'admins.*' => 'exists:users,id',
+            'photos.*' => 'nullable|image|max:2048',
         ]);
 
         $bannerPath = $event->banner;
@@ -119,6 +148,25 @@ class EventController extends Controller
             'start_date' => $request->start_date,
             'banner' => $bannerPath,
         ]);
+
+        // Sync ulang admin pendamping menggunakan relasi eventAdmin
+        $eventAdmin = $event->admins();
+        $eventAdmin->sync($request->admins ?? []);
+
+        // Tambah foto baru (jika diupload) menggunakan relasi eventPhoto
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                if ($photo->isValid()) {
+                    $photoPath = $photo->store('event_photos', 'public');
+                    $event->eventPhotos()->create(['photo' => $photoPath]);
+                }
+            }
+        }
+
+        // $created = $event->eventPhotos()->create(['photo' => $photoPath]);
+        // dd($created);
+
+        // \Log::info('Foto berhasil ditambahkan');
 
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }

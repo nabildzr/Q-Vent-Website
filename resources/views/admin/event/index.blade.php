@@ -9,7 +9,7 @@
             <x-slot:icon>solar:calendar-add-broken</x-slot:icon>
         </x-breadcrumb>
 
-      
+        @include('layouts.feedback')
 
         <div class="card basic-data-table">
             <div class="card-header d-flex justify-content-between align-items-center">

@@ -6,7 +6,7 @@
     <div class="dashboard-main-body">
         <x-breadcrumb>
             <x-slot:title>Daftar Kategori Event</x-slot:title>
-            <x-slot:icon>material-symbols:category-search-outline-rounded</x-slot:icon>
+            <x-slot:icon>iconamoon:category-light</x-slot:icon>
         </x-breadcrumb>
 
         @include('layouts.feedback')

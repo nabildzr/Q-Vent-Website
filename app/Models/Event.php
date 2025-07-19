@@ -37,9 +37,9 @@ class Event extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    public function admin()
+    public function admins()
     {
-        return $this->hasMany(EventAdmin::class);
+        return $this->belongsToMany(User::class, 'event_admins');
     }
 
     public function createdBy()
@@ -62,7 +62,8 @@ class Event extends Model
         return $this->hasMany(EventRegistrationLink::class);
     }
 
-    public function eventCategory() {
+    public function eventCategory()
+    {
         return $this->belongsTo(EventCategory::class, 'event_category_id');
     }
 }
