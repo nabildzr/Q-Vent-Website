@@ -61,6 +61,9 @@ class EventController extends Controller
             'start_date' => $request->start_date,
             'banner' => $bannerPath,
         ]);
+        
+        EventPhoto::create();
+
 
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil ditambahkan.');
     }
