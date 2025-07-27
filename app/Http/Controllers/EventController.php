@@ -67,6 +67,9 @@ class EventController extends Controller
             'start_date' => $request->start_date,
             'banner' => $bannerPath,
         ]);
+        
+        EventPhoto::create();
+
 
         // Simpan admin pendamping (jika ada)
         if ($request->has('admins')) {
