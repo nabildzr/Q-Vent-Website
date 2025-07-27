@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
     /** @use HasFactory<\Database\Factories\EventFactory> */
-    use HasFactory;
+    use HasFactory, HasTimestamps;
+
 
     protected $fillable = [
         'title',
@@ -35,29 +37,33 @@ class Event extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    public function admin()
+    public function admins()
     {
-        return $this->hasMany(EventAdmin::class);
+        return $this->belongsToMany(User::class, 'event_admins');
     }
 
-    public function creator()
+    public function createdBy()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function eventDetail() {
+    public function eventDetail()
+    {
         return $this->hasOne(EventDetail::class);
     }
 
-    public function eventPhotos() {
+    public function eventPhotos()
+    {
         return $this->hasMany(EventPhoto::class);
     }
 
-    public function eventRegistrationLink() {
+    public function eventRegistrationLink()
+    {
         return $this->hasMany(EventRegistrationLink::class);
     }
 
-    // public function eventCategory() {
-    //     return $this->hasOne(EventCategory::class);
-    // }
+    public function eventCategory()
+    {
+        return $this->belongsTo(EventCategory::class, 'event_category_id');
+    }
 }
