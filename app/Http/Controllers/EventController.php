@@ -73,21 +73,31 @@ class EventController extends Controller
             $event->admins()->sync($request->admins); // event_admins pivot
         }
 
-        // Tambah foto baru (jika diupload) menggunakan EventPhoto::create
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
-            if ($photo->isValid()) {
-                $photoPath = $photo->store('event_photos', 'public');
-                EventPhoto::create([
-                'event_id' => $event->id,
-                'photo' => $photoPath,
-                ]);
-            }
+                if ($photo->isValid()) {
+                    \Log::info("Uploading photo for event ID: " . $event->id);
+                    $photoPath = $photo->store('event_photos', 'public');
+                    EventPhoto::create([
+                        'event_id' => $event->id,
+                        'photo' => $photoPath,
+                    ]);
+                } else {
+                    \Log::warning("Invalid photo upload attempt", [
+                        'error' => $photo->getErrorMessage(),
+                        'name' => $photo->getClientOriginalName()
+                    ]);
+                }
             }
         }
 
-
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil ditambahkan.');
+    }
+
+    public function show($id)
+    {
+        $event = Event::with(['eventCategory', 'createdBy', 'admins', 'eventPhotos'])->findOrFail($id);
+        return view('admin.event.show', compact('event'));
     }
 
     public function edit($id)
@@ -150,20 +160,39 @@ class EventController extends Controller
         $eventAdmin = $event->admins();
         $eventAdmin->sync($request->admins ?? []);
 
-        // Tambah foto baru (jika diupload) menggunakan relasi eventPhoto
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
                 if ($photo->isValid()) {
+                    \Log::info("Uploading photo for event ID: " . $event->id);
                     $photoPath = $photo->store('event_photos', 'public');
-                    $event->eventPhotos()->create(['photo' => $photoPath]);
+                    EventPhoto::create([
+                        'event_id' => $event->id,
+                        'photo' => $photoPath,
+                    ]);
+                } else {
+                    \Log::warning("Invalid photo upload attempt", [
+                        'error' => $photo->getErrorMessage(),
+                        'name' => $photo->getClientOriginalName()
+                    ]);
                 }
             }
         }
 
-        // $created = $event->eventPhotos()->create(['photo' => $photoPath]);
-        // dd($created);
+        // Hapus foto lama jika ada yang diminta dihapus
+        if ($request->has('removed_photos')) {
+            foreach ($request->removed_photos as $photoId) {
+                $photo = EventPhoto::find($photoId);
+                if ($photo) {
+                    // Hapus dari storage jika ada
+                    if (Storage::disk('public')->exists($photo->photo)) {
+                        Storage::disk('public')->delete($photo->photo);
+                    }
 
-        // \Log::info('Foto berhasil ditambahkan');
+                    // Hapus dari database
+                    $photo->delete();
+                }
+            }
+        }
 
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }

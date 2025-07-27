@@ -34,6 +34,7 @@ Route::prefix('admin')->group(function () {
         'index' => 'admin.event.index',
         'create' => 'admin.event.create',
         'store' => 'admin.event.store',
+        'show' => 'admin.event.show',
         'edit' => 'admin.event.edit',
         'update' => 'admin.event.update',
         'destroy' => 'admin.event.destroy',
