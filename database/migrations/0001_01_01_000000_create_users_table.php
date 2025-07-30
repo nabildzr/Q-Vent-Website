@@ -20,6 +20,7 @@ return new class extends Migration
                 'super_admin',
                 'admin',
             ]);
+            $table->string('otp')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
