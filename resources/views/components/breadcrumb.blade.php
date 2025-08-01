@@ -3,7 +3,7 @@
       <ul class="d-flex align-items-center gap-2">
           <li class="fw-medium">
               <a href="index.html" class="d-flex align-items-center gap-1 hover-text-primary">
-                  <iconify-icon icon="solar:home-smile-angle-outline" class="icon text-lg"></iconify-icon>
+                  <iconify-icon icon="{{ $icon ?? 'solar:home-smile-angle-outline' }}" class="icon text-lg"></iconify-icon>
                   {{ $title }}
               </a>
           </li>
