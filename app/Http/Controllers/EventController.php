@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\EventPhoto;
+use App\Models\EventRegistrationLink;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -66,6 +67,16 @@ class EventController extends Controller
             'status' => $request->status,
             'start_date' => $request->start_date,
             'banner' => $bannerPath,
+        ]);
+
+        $link = preg_replace('/[^a-z0-9]+/', '-', strtolower($request->title));
+        $link = trim($link, '-');
+
+        EventRegistrationLink::create([
+            'event_id' => $event->id,
+            'status_id' => 'open',
+            'link' => $link,
+            'valid_until' => now()->addDays(30),
         ]);
 
         // Simpan admin pendamping (jika ada)
@@ -197,6 +208,23 @@ class EventController extends Controller
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }
 
+    public function updateRegistrationLink(Request $request, $id)
+    {
+        $request->validate([
+            'link' => 'required|string|max:255',
+            'valid_until' => 'required|date',
+        ]);
+
+        $link = EventRegistrationLink::findOrFail($id);
+
+        $link->update([
+            'link' => $request->link,
+            'valid_until' => $request->valid_until,
+        ]);
+
+        return redirect()->back()->with('success', 'Registration link berhasil diperbarui.');
+    }
+
     public function destroy($id)
     {
         $event = Event::with('eventPhotos')->findOrFail($id);
@@ -213,6 +241,10 @@ class EventController extends Controller
         }
 
         $event->admins()->detach();
+
+        if ($event->registrationLink) {
+            $event->registrationLink->delete();
+        }
 
         $event->delete();
 

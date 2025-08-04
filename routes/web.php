@@ -40,5 +40,9 @@ Route::prefix('admin')->group(function () {
         'destroy' => 'admin.event.destroy',
     ]);
 
+    Route::put('/event/registration-link/{id}', [EventController::class, 'updateRegistrationLink'])
+        ->name('admin.event.registration-link.update');
+
+    
     // Route::get('/', [DashboardController::class, 'index']);
 });

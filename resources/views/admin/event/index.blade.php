@@ -34,14 +34,14 @@
                         @forelse ($events as $event)
                             <tr>
                                 <td>{{ $event->id }}</td>
-                                <td>{{ Str::limit($event->title, 20) }}</td>
-                                <td>{{ $event->eventCategory->name ?? '-' }}</td>
-                                <td>{{ $event->createdBy->name ?? '-' }}</td>
+                                <td class="text-truncate" style="max-width: 120px;" title="{{ $event->title }}">{{ Str::limit($event->title, 15) }}</td>
+                                <td class="text-truncate" style="max-width: 120px;" title="{{ $event->eventCategory->name ?? '-' }}">{{ Str::limit($event->eventCategory->name ?? '-', 15) }}</td>
+                                <td class="text-truncate" style="max-width: 120px;" title="{{ $event->createdBy->name ?? '-' }}">{{ Str::limit($event->createdBy->name ?? '-', 15) }}</td>
                                 <td>{{ $event->start_date }}</td>
                                 <td>
                                     @if ($event->banner)
-                                        <img src="{{ asset('storage/' . $event->banner) }}" alt="Banner" height="40"
-                                            width="60" class="object-fit-cover rounded">
+                                        <img src="{{ asset('storage/' . $event->banner) }}" alt="Banner"
+                                        class="object-fit-cover rounded" style="height: 30px; width: 30px;">
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif

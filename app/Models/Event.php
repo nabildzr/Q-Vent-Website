@@ -57,9 +57,9 @@ class Event extends Model
         return $this->hasMany(EventPhoto::class);
     }
 
-    public function eventRegistrationLink()
+    public function registrationLink()
     {
-        return $this->hasMany(EventRegistrationLink::class);
+        return $this->hasOne(EventRegistrationLink::class);
     }
 
     public function eventCategory()

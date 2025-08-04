@@ -64,6 +64,26 @@
                         </p>
                     </div>
 
+                    <div class="col-md-6">
+                        <label class="fw-semibold text-muted">Registration Link</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <p class="mb-0">
+                                {{ $event->registrationLink->link ?? '-' }}
+                            </p>
+                            <div class="d-flex align-items-center gap-2">
+                                <button
+                                    class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                    data-bs-toggle="modal" data-bs-target="#editLinkModal">
+                                    <iconify-icon icon="lucide:edit"></iconify-icon>
+                                </button>
+                                <a href="#x" type="button"
+                                    class="btn rounded-pill btn-danger-100 text-danger-600 radius-8 px-14 py-6 text-sm">Edit
+                                    Form
+                                    Input</a>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-md-12">
                         <label class="fw-semibold text-muted">Deskripsi</label>
                         <div class="border rounded p-3 bg-light">{{ $event->description }}</div>
@@ -160,6 +180,46 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Edit Registration Link -->
+<div class="modal fade" id="editLinkModal" tabindex="-1" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        @if ($event->registrationLink)
+            <form method="POST"
+                action="{{ route('admin.event.registration-link.update', $event->registrationLink->id) }}">
+                @csrf
+                @method('PUT')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editLinkModalLabel">Edit Registration Link</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Tutup"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="link" class="form-label">Link</label>
+                            <input type="text" name="link" class="form-control" id="link"
+                                value="{{ $event->registrationLink->link ?? '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="valid_until" class="form-label">Valid Until</label>
+                            <input type="date" name="valid_until" class="form-control" id="valid_until"
+                                value="{{ optional($event->registrationLink->valid_until)->format('Y-m-d') }}"
+                                required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    </div>
+                </div>
+            </form>
+        @else
+            <div class="alert alert-warning">Registration link belum dibuat untuk event ini.</div>
+        @endif
+    </div>
+</div>
+
 
 @section('beforeAppScripts')
     <script>
