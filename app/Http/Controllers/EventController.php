@@ -8,6 +8,7 @@ use App\Models\EventPhoto;
 use App\Models\EventRegistrationLink;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class EventController extends Controller
 {
@@ -21,10 +22,13 @@ class EventController extends Controller
 
     public function create()
     {
+        $existingLinks = EventRegistrationLink::pluck('link')->toArray();
+
         return view('admin.event.form', [
             'event' => new Event(), // kalo create, kita buat instance baru
             'isEdit' => false, // menandakan ini adalah form untuk membuat event baru
             'users' => User::all(),
+            'existingLinks' => $existingLinks,
         ]);
     }
 
@@ -72,6 +76,13 @@ class EventController extends Controller
         $link = preg_replace('/[^a-z0-9]+/', '-', strtolower($request->title));
         $link = trim($link, '-');
 
+        // Cek dan buat link unik jika sudah ada
+        $baseLink = $link;
+        $counter = 1;
+        while (EventRegistrationLink::where('link', $link)->exists()) {
+            $link = $baseLink . '-' . $counter++;
+        }
+
         EventRegistrationLink::create([
             'event_id' => $event->id,
             'status_id' => 'open',
@@ -105,19 +116,25 @@ class EventController extends Controller
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil ditambahkan.');
     }
 
-    public function show($id)
+    public function show(Event $event)
     {
-        $event = Event::with(['eventCategory', 'createdBy', 'admins', 'eventPhotos'])->findOrFail($id);
-        return view('admin.event.show', compact('event'));
+        $allLinks = EventRegistrationLink::where('id', '!=', optional($event->registrationLink)->id)
+            ->pluck('link')
+            ->toArray();
+
+        return view('admin.event.show', compact('event', 'allLinks'));
     }
 
     public function edit($id)
     {
         $event = Event::findOrFail($id);
+
+        $existingLinks = EventRegistrationLink::pluck('link')->toArray();
         return view('admin.event.form', [
             'event' => $event, // kalo edit, kita ambil data event yang ada
             'isEdit' => true, // menandakan ini adalah form untuk mengedit event yang sudah ada
             'users' => User::all(),
+            'existingLinks' => $existingLinks,
         ]);
     }
 
@@ -211,7 +228,12 @@ class EventController extends Controller
     public function updateRegistrationLink(Request $request, $id)
     {
         $request->validate([
-            'link' => 'required|string|max:255',
+            'link' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('event_registration_links', 'link')->ignore($id),
+            ],
             'valid_until' => 'required|date',
         ]);
 

@@ -66,4 +66,8 @@ class Event extends Model
     {
         return $this->belongsTo(EventCategory::class, 'event_category_id');
     }
+    public function customInputs()
+    {
+        return $this->hasMany(CustomInputRegistration::class);
+    }
 }

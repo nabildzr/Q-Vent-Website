@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendees', function (Blueprint $table) {
+        Schema::create('custom_input_registration_value', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('custom_input_id')->constrained('custom_input_registration')->cascadeOnDelete();
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('phone_number')->nullable();
-            $table->string('email')->nullable();
-            $table->text('code')->nullable();
-            $table->text('input_document')->nullable();
+            $table->foreignId('attendee_id')->constrained('attendees')->cascadeOnDelete();
+            $table->text('name');
+            $table->text('value');
             $table->timestamps();
         });
     }
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendees');
+        Schema::dropIfExists('custom_input_registration_value');
     }
 };

@@ -76,13 +76,18 @@
                                     data-bs-toggle="modal" data-bs-target="#editLinkModal">
                                     <iconify-icon icon="lucide:edit"></iconify-icon>
                                 </button>
-                                <a href="#x" type="button"
-                                    class="btn rounded-pill btn-danger-100 text-danger-600 radius-8 px-14 py-6 text-sm">Edit
+                                <a href="{{ route('admin.event.input.edit', $event->id) }}" type="button"
+                                    class="btn rounded-pill btn-danger-100 text-danger-600 radius-8 px-14 py-6 text-sm">Custom
                                     Form
                                     Input</a>
                             </div>
                         </div>
                     </div>
+
+                    <a href="{{ route('registration.form', ['link' => $event->registrationLink->link]) }}" target="_blank">
+                        {{ url('event/' . $event->registrationLink->link) }}
+                    </a>
+
 
                     <div class="col-md-12">
                         <label class="fw-semibold text-muted">Deskripsi</label>
@@ -186,7 +191,8 @@
     <div class="modal-dialog">
         @if ($event->registrationLink)
             <form method="POST"
-                action="{{ route('admin.event.registration-link.update', $event->registrationLink->id) }}">
+                action="{{ route('admin.event.registration-link.update', $event->registrationLink->id) }}"
+                id="form-update-link">
                 @csrf
                 @method('PUT')
                 <div class="modal-content">
@@ -209,7 +215,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Simpan</button>
+                        <button type="submit" class="btn btn-primary" id="submit-btn">Simpan</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     </div>
                 </div>
@@ -222,7 +228,35 @@
 
 
 @section('beforeAppScripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        const existingLinks = @json($allLinks);
+        const currentLink = '{{ $event->registrationLink->link ?? '' }}';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('form-update-link');
+            const linkInput = document.getElementById('link');
+            const submitBtn = document.getElementById('submit-btn');
+
+            submitBtn?.addEventListener('click', function(e) {
+                e.preventDefault();
+                const newLink = linkInput.value.trim();
+
+                if (existingLinks.includes(newLink) && newLink !== currentLink) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Link sudah digunakan!',
+                        text: 'Silakan ubah link ke yang belum digunakan.',
+                        confirmButtonText: 'Oke'
+                    });
+                    return false;
+                }
+
+                form.submit();
+            });
+        });
+
         // Saat gambar diklik, tampilkan modal dan ubah src
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.clickable-image').forEach(function(img) {

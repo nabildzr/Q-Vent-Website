@@ -265,6 +265,50 @@
             // fileInputMultiple.value = ''; // Opsional
         });
 
+        const allLinks = @json($existingLinks);
+        const titleInput = document.querySelector('input[name="title"]');
+        const linkInput = document.getElementById('link');
+        const isEdit = {{ $isEdit ? 'true' : 'false' }};
+        const currentLink = '{{ optional($event->registrationLink)->link }}';
+
+        function slugify(text) {
+            return text.toString().toLowerCase()
+                .replace(/\s+/g, '-') // replace spaces with -
+                .replace(/[^\w\-]+/g, '') // remove all non-word chars
+                .replace(/\-\-+/g, '-') // replace multiple - with single -
+                .replace(/^-+/, '') // trim - from start
+                .replace(/-+$/, ''); // trim - from end
+        }
+
+        function generateUniqueLink(base) {
+            let newLink = base;
+            let counter = 1;
+            while (allLinks.includes(newLink) && newLink !== currentLink) {
+                newLink = `${base}-${counter}`;
+                counter++;
+            }
+            return newLink;
+        }
+
+        titleInput?.addEventListener('input', function() {
+            const baseSlug = slugify(this.value);
+            const uniqueLink = generateUniqueLink(baseSlug);
+            linkInput.value = uniqueLink;
+        });
+
+        // Optional: validasi akhir saat submit
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const value = linkInput.value;
+            if (allLinks.includes(value) && value !== currentLink) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Link registrasi sudah digunakan',
+                    text: 'Harap ubah judul agar menghasilkan link unik',
+                });
+            }
+        });
+
         // Hapus existing photo secara visual
         document.querySelectorAll('.uploaded-img__remove').forEach(button => {
             button.addEventListener('click', function() {
