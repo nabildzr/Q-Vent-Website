@@ -24,8 +24,9 @@ return new class extends Migration
                 'cancelled'
             ]);
             $table->dateTime('start_date');
-            // $table->dateTime('end_date'); 
+            $table->dateTime('end_date');
             $table->text('banner');
+            $table->text('qr_logo')->nullable();
             $table->timestamps();
         });
     }

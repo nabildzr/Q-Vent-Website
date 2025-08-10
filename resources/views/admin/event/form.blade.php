@@ -70,6 +70,17 @@
                             @enderror
                         </div>
 
+                        {{-- Tanggal Selesai --}}
+                        <div class="col-md-6">
+                            <label class="form-label">Tanggal Selesai</label>
+                            <input type="date" name="end_date"
+                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d')) }}"
+                                class="form-control" required>
+                            @error('end_date')
+                                <div style="color:red">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         {{-- Deskripsi --}}
                         <div class="col-md-12">
                             <label class="form-label">Deskripsi</label>
@@ -80,22 +91,27 @@
                         </div>
 
                         {{-- Status --}}
-                        <div class="col-md-6">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-select" required>
-                                <option value="">Pilih Status</option>
-                                <option value="active" {{ old('status', $event->status) == 'active' ? 'selected' : '' }}>
-                                    Active</option>
-                                <option value="done" {{ old('status', $event->status) == 'done' ? 'selected' : '' }}>
-                                    Done</option>
-                                <option value="cancelled"
-                                    {{ old('status', $event->status) == 'cancelled' ? 'selected' : '' }}>
-                                    Cancelled</option>
-                            </select>
-                            @error('status')
-                                <div style="color:red">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        @if ($isEdit)
+                            {{-- Status hanya muncul saat edit --}}
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select" required>
+                                    <option value="">Pilih Status</option>
+                                    <option value="active"
+                                        {{ old('status', $event->status) == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="done" {{ old('status', $event->status) == 'done' ? 'selected' : '' }}>
+                                        Done</option>
+                                    <option value="cancelled"
+                                        {{ old('status', $event->status) == 'cancelled' ? 'selected' : '' }}>Cancelled
+                                    </option>
+                                </select>
+                                @error('status')
+                                    <div style="color:red">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        @else
+                            <input type="hidden" name="status" value="active">
+                        @endif
 
                         {{-- Admin --}}
                         <div class="col-md-6">
@@ -136,6 +152,41 @@
                                 <input id="upload-file" type="file" name="banner" hidden accept="image/*">
                             </label>
                         </div>
+
+                        {{-- QR Logo Upload --}}
+                        <div class="upload-image-wrapper d-flex align-items-center gap-4">
+                            {{-- Preview gambar yang sudah diupload --}}
+                            <div
+                                class="uploaded-img {{ $isEdit && $event->qr_logo ? '' : 'd-none' }} position-relative h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-neutral-50">
+                                <button type="button"
+                                    class="uploaded-img__remove position-absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-8 d-flex"
+                                    onclick="removeQrLogo(this)">
+                                    <iconify-icon icon="radix-icons:cross-2" class="text-xl text-danger-600"></iconify-icon>
+                                </button>
+                                <img id="qr-logo-preview" class="w-100 h-100 object-fit-cover"
+                                    src="{{ $isEdit && $event->qr_logo ? asset('storage/' . $event->qr_logo) : '#' }}"
+                                    alt="QR Logo">
+                            </div>
+
+                            {{-- Tombol upload --}}
+                            <label
+                                class="upload-file h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-neutral-50 bg-hover-neutral-200 d-flex align-items-center flex-column justify-content-center gap-1"
+                                for="qr_logo_input">
+                                <iconify-icon icon="solar:camera-outline"
+                                    class="text-xl text-secondary-light"></iconify-icon>
+                                <span class="fw-semibold text-secondary-light">Upload</span>
+                                <span class="fw-semibold text-secondary-light">QR Logo</span>
+                                <input id="qr_logo_input" type="file" name="qr_logo" hidden accept="image/*"
+                                    onchange="previewQrLogo(event)">
+                            </label>
+
+                            {{-- Hidden input untuk menandai hapus file lama --}}
+                            <input type="hidden" name="remove_qr_logo" id="remove_qr_logo" value="0">
+                        </div>
+
+                        @error('qr_logo')
+                            <div style="color:red">{{ $message }}</div>
+                        @enderror
 
                         {{-- Admin Pendamping --}}
                         <div class="col-md-12">
@@ -227,6 +278,31 @@
             fileInput.value = "";
         });
 
+        function previewQrLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const wrapper = event.target.closest('.upload-image-wrapper');
+                const previewDiv = wrapper.querySelector('.uploaded-img');
+                const previewImg = previewDiv.querySelector('img');
+
+                previewImg.src = URL.createObjectURL(file);
+                previewDiv.classList.remove('d-none');
+
+                // Jika upload baru, pastikan flag hapus direset
+                wrapper.querySelector('#remove_qr_logo').value = "0";
+            }
+        }
+
+        function removeQrLogo(button) {
+            const wrapper = button.closest('.upload-image-wrapper');
+            wrapper.querySelector('input[type=file]').value = '';
+            wrapper.querySelector('.uploaded-img').classList.add('d-none');
+            wrapper.querySelector('img').src = '#';
+
+            // Tandai bahwa file lama dihapus
+            wrapper.querySelector('#remove_qr_logo').value = "1";
+        }
+
         // Preview multiple image
         const fileInputMultiple = document.getElementById("upload-file-multiple");
         const uploadedImgsContainer = document.querySelector(".uploaded-imgs-container");
@@ -266,8 +342,8 @@
         });
 
         const allLinks = @json($existingLinks);
-        const titleInput = document.querySelector('input[name="title"]');
-        const linkInput = document.getElementById('link');
+        // const titleInput = document.querySelector('input[name="title"]');
+        // const linkInput = document.getElementById('link');
         const isEdit = {{ $isEdit ? 'true' : 'false' }};
         const currentLink = '{{ optional($event->registrationLink)->link }}';
 
@@ -290,11 +366,11 @@
             return newLink;
         }
 
-        titleInput?.addEventListener('input', function() {
-            const baseSlug = slugify(this.value);
-            const uniqueLink = generateUniqueLink(baseSlug);
-            linkInput.value = uniqueLink;
-        });
+        // titleInput?.addEventListener('input', function() {
+        //     const baseSlug = slugify(this.value);
+        //     const uniqueLink = generateUniqueLink(baseSlug);
+        //     linkInput.value = uniqueLink;
+        // });
 
         // Optional: validasi akhir saat submit
         document.querySelector('form').addEventListener('submit', function(e) {

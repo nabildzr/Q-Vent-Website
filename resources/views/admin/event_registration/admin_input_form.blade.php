@@ -1,11 +1,11 @@
 @extends('layouts.layout')
 
-@section('title', 'Pengaturan Input Registrasi')
+@section('title', 'Custom Input Registrasi')
 
 @section('content')
     <div class="dashboard-main-body">
         <x-breadcrumb>
-            <x-slot:title>Pengaturan Input Registrasi</x-slot:title>
+            <x-slot:title>Custom Input Registrasi</x-slot:title>
             <x-slot:icon>solar:settings-broken</x-slot:icon>
         </x-breadcrumb>
 
@@ -99,7 +99,7 @@
                     <button type="button" class="btn btn-outline-primary-600 radius-8 px-20 py-11 w-100"
                         onclick="addCustomInput()">+ Tambah
                         Input</button>
-                    <button class="btn btn-success mt-12" type="submit">Simpan Pengaturan</button>
+                    <button class="btn btn-success mt-12" type="submit">Simpan</button>
                 </div>
             </div>
         </form>
@@ -249,7 +249,7 @@
             e.preventDefault(); // blokir submit dulu
 
             Swal.fire({
-                title: 'Simpan Pengaturan?',
+                title: 'Simpan?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Simpan',

@@ -20,7 +20,9 @@ class Event extends Model
         'created_by',
         'status',
         'start_date',
-        'banner'
+        'end_date',
+        'banner',
+        'qr_logo'
     ];
 
     protected $casts = [

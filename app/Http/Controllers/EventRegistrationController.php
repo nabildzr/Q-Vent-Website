@@ -9,9 +9,17 @@ use App\Models\EventRegistrationLink;
 use App\Models\CustomInputRegistration;
 use App\Models\CustomInputRegistrationValue;
 use App\Models\DefaultInputRegistrationStatus;
+use App\Models\QRCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\PngWriter;
 
 class EventRegistrationController extends Controller
 {
@@ -105,6 +113,45 @@ class EventRegistrationController extends Controller
     }
 
     /**
+     * Generate QR Code untuk peserta.
+     */
+
+    private function generateQRCode($text, $filename, $event)
+    {
+        // Ambil logo dari event, kalau tidak ada pakai default
+        $logoPath = null;
+
+        if (!empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)) {
+            // Ambil path absolut
+            $logoPath = storage_path('app/public/' . $event->qr_logo);
+        } else {
+            $logoPath = public_path('images/logo.png'); // fallback
+        }
+
+        $builder = new Builder(
+            writer: new PngWriter(),
+            writerOptions: [],
+            validateResult: false,
+            data: $text,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::High,
+            size: 300,
+            margin: 10,
+            roundBlockSizeMode: RoundBlockSizeMode::Margin,
+            logoPath: $logoPath,
+            logoResizeToWidth: 75,
+            logoPunchoutBackground: true
+        );
+
+        $result = $builder->build();
+
+        $path = storage_path('app/public/qrcodes/' . $filename);
+        $result->saveToFile($path);
+
+        return $result->getDataUri();
+    }
+
+    /**
      * Menyimpan data registrasi peserta.
      */
     public function submit(Request $request, $link)
@@ -145,7 +192,7 @@ class EventRegistrationController extends Controller
             'email' => $request->email ?? null,
             'phone_number' => $request->phone_number ?? null,
             'input_document' => $request->input_document ?? null,
-            'code' => strtoupper(Str::random(10)) . 'event' . $event->id,
+            'code' => strtoupper(Str::random(20)),
         ]);
 
         // Kalau ada file dokumen, simpan filenya
@@ -154,6 +201,32 @@ class EventRegistrationController extends Controller
             $path = $file->store('documents', 'public');
             $attendee->update(['input_document' => $path]);
         }
+
+        // Generate qrcode_data sesuai format
+        $qrcodeData = $attendee->id . $attendee->code . 'event' . $event->id;
+
+        // Ambil salah satu nama (prioritas first_name, kalau kosong pakai last_name)
+        $namePart = $attendee->first_name ?: $attendee->last_name;
+
+        // Pastikan nama aman untuk nama file (hapus spasi dan karakter aneh)
+        $namePart = preg_replace('/[^A-Za-z0-9_\-]/', '_', $namePart);
+
+        // Buat filename dari nama
+        $qrFilename = $namePart . '_' . $attendee->code . '.png';
+
+        // Generate QR Code dengan logo sesuai event
+        $this->generateQRCode($qrcodeData, $qrFilename, $event);
+
+        // Simpan path QR ke attendee (opsional kalau mau di table attendees juga)
+        $attendee->update(['qr_code_path' => 'qrcodes/' . $qrFilename]);
+
+        // Simpan ke tabel qr_codes
+        QRCode::create([
+            'event_id' => $event->id,
+            'attendee_id' => $attendee->id,
+            'qrcode_data' => $qrcodeData,
+            'valid_until' => now()->addDays(7), // contoh valid 7 hari
+        ]);
 
         // Simpan custom input values
         $customValues = $request->input('custom', []);
