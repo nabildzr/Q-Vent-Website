@@ -13,10 +13,10 @@ class UserSeeder extends Seeder
 
         User::create([
             'name' => 'Example User',
-            'email' => 'muhammadnbillz@gmail.com',
+            'email' => 'example@gmail.com',
             'role' => 'admin',
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'phone_number' => '6287814037812',
+            'phone_number' => '62812112',
         ]);
     }
 }
