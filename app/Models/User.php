@@ -76,6 +76,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Event::class, 'event_admins', 'user_id', 'event_id')
             ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now()) 
             ->withTimestamps();
         }
 
