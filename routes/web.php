@@ -4,9 +4,15 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventRegistrationController;
 
 use Illuminate\Support\Facades\Route;
 
+// ========== ROUTE UNTUK PESERTA ==========
+Route::get('/event/{link}', [EventRegistrationController::class, 'showForm'])->name('registration.form');
+Route::post('/event/{link}/submit', [EventRegistrationController::class, 'submit'])->name('registration.submit');
+
+// ========== ROUTE UNTUK ADMIN ==========
 Route::prefix('admin')->group(function () {
     Route::resource('/', DashboardController::class)->names([
         'index' => 'admin.dashboard.index',
@@ -39,6 +45,14 @@ Route::prefix('admin')->group(function () {
         'update' => 'admin.event.update',
         'destroy' => 'admin.event.destroy',
     ]);
+
+    Route::put('/event/registration-link/{id}', [EventController::class, 'updateRegistrationLink'])
+        ->name('admin.event.registration-link.update');
+
+    Route::get('/event/{event}/input-registration', [EventRegistrationController::class, 'editInputs'])
+        ->name('admin.event.input.edit');
+    Route::post('/event/{event}/input-registration', [EventRegistrationController::class, 'updateInputs'])
+        ->name('admin.event.input.update');
 
     // Route::get('/', [DashboardController::class, 'index']);
 });

@@ -20,7 +20,9 @@ class Event extends Model
         'created_by',
         'status',
         'start_date',
-        'banner'
+        'end_date',
+        'banner',
+        'qr_logo'
     ];
 
     protected $casts = [
@@ -57,13 +59,17 @@ class Event extends Model
         return $this->hasMany(EventPhoto::class);
     }
 
-    public function eventRegistrationLink()
+    public function registrationLink()
     {
-        return $this->hasMany(EventRegistrationLink::class);
+        return $this->hasOne(EventRegistrationLink::class);
     }
 
     public function eventCategory()
     {
         return $this->belongsTo(EventCategory::class, 'event_category_id');
+    }
+    public function customInputs()
+    {
+        return $this->hasMany(CustomInputRegistration::class);
     }
 }

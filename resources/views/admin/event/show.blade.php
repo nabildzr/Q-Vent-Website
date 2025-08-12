@@ -41,6 +41,12 @@
                         <label class="fw-semibold text-muted">Start Date</label>
                         <p class="mb-0">{{ $event->start_date }}</p>
                     </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-semibold text-muted">End Date</label>
+                        <p class="mb-0">{{ $event->end_date }}</p>
+                    </div>
+
                     <div class="col-md-6">
                         <label class="fw-semibold text-muted">Lokasi</label>
                         <p class="mb-0">{{ $event->location }}</p>
@@ -63,6 +69,30 @@
                             </span>
                         </p>
                     </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-semibold text-muted">Registration Link</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <p class="mb-0">
+                                {{ $event->registrationLink->link ?? '-' }}
+                            </p>
+                            <div class="d-flex align-items-center gap-2">
+                                <button
+                                    class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                    data-bs-toggle="modal" data-bs-target="#editLinkModal">
+                                    <iconify-icon icon="lucide:edit"></iconify-icon>
+                                </button>
+                                <a href="{{ route('admin.event.input.edit', $event->id) }}" type="button"
+                                    class="btn rounded-pill btn-danger-100 text-danger-600 radius-8 px-14 py-6 text-sm">Custom
+                                    Form
+                                    Input</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('registration.form', ['link' => $event->registrationLink->link]) }}" target="_blank" class="text-primary-600 text-decoration-underline">
+                        {{ url('event/' . $event->registrationLink->link) }}
+                    </a>
 
                     <div class="col-md-12">
                         <label class="fw-semibold text-muted">Deskripsi</label>
@@ -124,54 +154,136 @@
                             <p class="text-muted mt-2">Tidak ada foto tambahan</p>
                         @endif
                     </div>
+
+                    <div class="col-md-12">
+                        <label class="fw-semibold text-muted">QR Logo</label><br>
+                        @if ($event->qr_logo)
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <img src="{{ asset('storage/' . $event->qr_logo) }}" alt="QR Logo"
+                                    class="rounded shadow-sm clickable-image"
+                                    style="height: 100px; width: 100px; object-fit: cover; cursor: zoom-in;">
+                            </div>
+                        @else
+                            <p class="text-muted mt-2">Tidak ada QR Logo</p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
+
+    <!-- Modal untuk preview gambar -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <img src="" id="modalImage" class="img-fluid rounded" alt="Preview">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Semua Administrator -->
+    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Complete List of Administrators</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        @foreach ($event->admins as $admin)
+                            <div class="list-group-item d-flex align-items-center gap-2">
+                                <iconify-icon icon="lucide:user" class="text-primary"></iconify-icon>
+                                <span>{{ $admin->name }}</span>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-@endsection
 
-<!-- Modal untuk preview gambar -->
-<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <img src="" id="modalImage" class="img-fluid rounded" alt="Preview">
-        </div>
-    </div>
-</div>
-
-<!-- Modal Semua Administrator -->
-<div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Complete List of Administrators</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body">
-                <div class="list-group">
-                    @foreach ($event->admins as $admin)
-                        <div class="list-group-item d-flex align-items-center gap-2">
-                            <iconify-icon icon="lucide:user" class="text-primary"></iconify-icon>
-                            <span>{{ $admin->name }}</span>
+    <!-- Modal Edit Registration Link -->
+    <div class="modal fade" id="editLinkModal" tabindex="-1" aria-labelledby="editLinkModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            @if ($event->registrationLink)
+                <form method="POST"
+                    action="{{ route('admin.event.registration-link.update', $event->registrationLink->id) }}"
+                    id="form-update-link">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editLinkModalLabel">Edit Registration Link</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Tutup"></button>
                         </div>
-                    @endforeach
-                </div>
-            </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="link" class="form-label">Link</label>
+                                <input type="text" name="link" class="form-control" id="link"
+                                    value="{{ $event->registrationLink->link ?? '' }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="valid_until" class="form-label">Valid Until</label>
+                                <input type="date" name="valid_until" class="form-control" id="valid_until"
+                                    value="{{ optional($event->registrationLink->valid_until)->format('Y-m-d') }}"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary" id="submit-btn">Simpan</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        </div>
+                    </div>
+                </form>
+            @else
+                <div class="alert alert-warning">Registration link belum dibuat untuk event ini.</div>
+            @endif
         </div>
     </div>
-</div>
 
-@section('beforeAppScripts')
-    <script>
-        // Saat gambar diklik, tampilkan modal dan ubah src
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.clickable-image').forEach(function(img) {
-                img.addEventListener('click', function() {
-                    document.getElementById('modalImage').src = this.src;
-                    let modal = new bootstrap.Modal(document.getElementById('imageModal'));
-                    modal.show();
+
+    @section('beforeAppScripts')
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script>
+            const existingLinks = @json($allLinks);
+            const currentLink = '{{ $event->registrationLink->link ?? '' }}';
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('form-update-link');
+                const linkInput = document.getElementById('link');
+                const submitBtn = document.getElementById('submit-btn');
+
+                submitBtn?.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const newLink = linkInput.value.trim();
+
+                    if (existingLinks.includes(newLink) && newLink !== currentLink) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Link sudah digunakan!',
+                            text: 'Silakan ubah link ke yang belum digunakan.',
+                            confirmButtonText: 'Oke'
+                        });
+                        return false;
+                    }
+
+                    form.submit();
                 });
             });
-        });
-    </script>
-@endsection
+
+            // Saat gambar diklik, tampilkan modal dan ubah src
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.clickable-image').forEach(function(img) {
+                    img.addEventListener('click', function() {
+                        document.getElementById('modalImage').src = this.src;
+                        let modal = new bootstrap.Modal(document.getElementById('imageModal'));
+                        modal.show();
+                    });
+                });
+            });
+        </script>
+    @endsection

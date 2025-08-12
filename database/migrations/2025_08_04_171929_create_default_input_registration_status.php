@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendees', function (Blueprint $table) {
+        Schema::create('default_input_registration_status', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('phone_number')->nullable();
-            $table->string('email')->nullable();
-            $table->text('code')->nullable();
-            $table->text('input_document')->nullable();
+            $table->boolean('input_document')->default(false);
+            $table->boolean('input_first_name')->default(true);
+            $table->boolean('input_last_name')->default(true);
+            $table->boolean('input_email')->default(true);
+            $table->boolean('input_phone_number')->default(true);
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendees');
+        Schema::dropIfExists('default_input_registration_status');
     }
 };
