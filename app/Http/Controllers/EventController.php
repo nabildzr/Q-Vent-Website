@@ -67,9 +67,6 @@ class EventController extends Controller
             'start_date' => $request->start_date,
             'banner' => $bannerPath,
         ]);
-        
-        EventPhoto::create();
-
 
         // Simpan admin pendamping (jika ada)
         if ($request->has('admins')) {
@@ -202,7 +199,21 @@ class EventController extends Controller
 
     public function destroy($id)
     {
-        $event = Event::findOrFail($id);
+        $event = Event::with('eventPhotos')->findOrFail($id);
+
+        if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+            Storage::disk('public')->delete($event->banner);
+        }
+
+        foreach ($event->eventPhotos as $photo) {
+            if (Storage::disk('public')->exists($photo->photo)) {
+                Storage::disk('public')->delete($photo->photo);
+            }
+            $photo->delete(); // hapus dari database
+        }
+
+        $event->admins()->detach();
+
         $event->delete();
 
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil dihapus.');
