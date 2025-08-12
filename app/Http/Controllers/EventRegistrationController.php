@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Attendee;
-use App\Models\User;
 use App\Models\EventRegistrationLink;
 use App\Models\CustomInputRegistration;
 use App\Models\CustomInputRegistrationValue;
 use App\Models\DefaultInputRegistrationStatus;
 use App\Models\QRCode;
+use App\Mail\SendQrCodeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -116,17 +116,11 @@ class EventRegistrationController extends Controller
      * Generate QR Code untuk peserta.
      */
 
-    private function generateQRCode($text, $filename, $event)
+    private function generateQRCodeAsBase64($text, $event)
     {
-        // Ambil logo dari event, kalau tidak ada pakai default
-        $logoPath = null;
-
-        if (!empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)) {
-            // Ambil path absolut
-            $logoPath = storage_path('app/public/' . $event->qr_logo);
-        } else {
-            $logoPath = public_path('images/logo.png'); // fallback
-        }
+        $logoPath = !empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)
+            ? storage_path('app/public/' . $event->qr_logo)
+            : public_path('images/logo.png');
 
         $builder = new Builder(
             writer: new PngWriter(),
@@ -145,10 +139,10 @@ class EventRegistrationController extends Controller
 
         $result = $builder->build();
 
-        $path = storage_path('app/public/qrcodes/' . $filename);
-        $result->saveToFile($path);
-
-        return $result->getDataUri();
+        return [
+            'dataUri' => $result->getDataUri(),  // untuk <img src="...">
+            'binary' => $result->getString()    // untuk lampiran email
+        ];
     }
 
     /**
@@ -160,11 +154,10 @@ class EventRegistrationController extends Controller
         $event = $registrationLink->event;
         $eventId = $event->id;
 
-        // Ambil input aktif
+        // Validasi input seperti sebelumnya
         $defaultInputs = DefaultInputRegistrationStatus::where('event_id', $eventId)->first();
         $customInputs = CustomInputRegistration::where('event_id', $eventId)->where('status', true)->get();
 
-        // Validasi default
         $rules = [];
         if ($defaultInputs->input_first_name)
             $rules['first_name'] = 'required|string|max:255';
@@ -177,14 +170,13 @@ class EventRegistrationController extends Controller
         if ($defaultInputs->input_document)
             $rules['input_document'] = 'nullable|file|mimes:pdf,jpg,png|max:2048';
 
-        // Validasi custom
         foreach ($customInputs as $input) {
             $rules['custom.' . $input->name] = $input->is_required ? 'required|string' : 'nullable|string';
         }
 
         $validated = $request->validate($rules);
 
-        // Simpan ke tabel attendees
+        // Simpan attendee
         $attendee = Attendee::create([
             'event_id' => $event->id,
             'first_name' => $request->first_name ?? null,
@@ -195,42 +187,30 @@ class EventRegistrationController extends Controller
             'code' => strtoupper(Str::random(20)),
         ]);
 
-        // Kalau ada file dokumen, simpan filenya
         if ($request->hasFile('input_document')) {
-            $file = $request->file('input_document');
-            $path = $file->store('documents', 'public');
+            $path = $request->file('input_document')->store('documents', 'public');
             $attendee->update(['input_document' => $path]);
         }
 
-        // Generate qrcode_data sesuai format
+        // Generate data QR
         $qrcodeData = $attendee->id . $attendee->code . 'event' . $event->id;
-
-        // Ambil salah satu nama (prioritas first_name, kalau kosong pakai last_name)
-        $namePart = $attendee->first_name ?: $attendee->last_name;
-
-        // Pastikan nama aman untuk nama file (hapus spasi dan karakter aneh)
+        $namePart = $attendee->first_name ?: $attendee->last_name ?: 'QR';
         $namePart = preg_replace('/[^A-Za-z0-9_\-]/', '_', $namePart);
-
-        // Buat filename dari nama
         $qrFilename = $namePart . '_' . $attendee->code . '.png';
 
-        // Generate QR Code dengan logo sesuai event
-        $this->generateQRCode($qrcodeData, $qrFilename, $event);
+        // Generate QR (Data URI + binary untuk lampiran email)
+        $qrResult = $this->generateQRCodeAsBase64($qrcodeData, $event);
 
-        // Simpan path QR ke attendee (opsional kalau mau di table attendees juga)
-        $attendee->update(['qr_code_path' => 'qrcodes/' . $qrFilename]);
-
-        // Simpan ke tabel qr_codes
+        // Simpan QR data ke tabel qr_codes
         QRCode::create([
             'event_id' => $event->id,
             'attendee_id' => $attendee->id,
             'qrcode_data' => $qrcodeData,
-            'valid_until' => now()->addDays(7), // contoh valid 7 hari
+            'valid_until' => now()->addDays(7),
         ]);
 
         // Simpan custom input values
         $customValues = $request->input('custom', []);
-
         foreach ($customInputs as $input) {
             $value = $customValues[$input->name] ?? null;
             if ($value !== null) {
@@ -244,7 +224,36 @@ class EventRegistrationController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Registrasi berhasil!');
+        // ======== KONDISI PENGIRIMAN QR ========
+        if (!empty($attendee->email)) {
+            // Kirim QR via Email
+            \Mail::to($attendee->email)->send(
+                new SendQrCodeMail($event, $attendee, $qrResult['binary'], $qrFilename)
+            );
+
+            return view('user.form_registration.thankyou', [
+                'event' => $event,
+                'showQr' => false,
+                'qrData' => null
+            ]);
+        } elseif (!empty($attendee->phone_number)) {
+            // Placeholder kirim via WhatsApp/SMS
+            // Contoh: kirim link atau base64 QR ke API WhatsApp
+            // WhatsAppService::sendQr($attendee->phone_number, $qrResult['binary']);
+
+            return view('user.form_registration.thankyou', [
+                'event' => $event,
+                'showQr' => false,
+                'qrData' => null
+            ]);
+        } else {
+            // Tampilkan QR langsung di halaman
+            return view('user.form_registration.thankyou', [
+                'event' => $event,
+                'showQr' => true,
+                'qrData' => $qrResult['dataUri']
+            ]);
+        }
     }
 
     /**
