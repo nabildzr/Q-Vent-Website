@@ -62,8 +62,8 @@
                         {{-- Tanggal Mulai --}}
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Mulai</label>
-                            <input type="date" name="start_date"
-                                value="{{ old('start_date', optional($event->start_date)->format('Y-m-d')) }}"
+                            <input type="datetime-local" name="start_date"
+                                value="{{ old('start_date', optional($event->start_date)->format('Y-m-d\TH:i')) }}"
                                 class="form-control" required>
                             @error('start_date')
                                 <div style="color:red">{{ $message }}</div>
@@ -73,8 +73,8 @@
                         {{-- Tanggal Selesai --}}
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Selesai</label>
-                            <input type="date" name="end_date"
-                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d')) }}"
+                            <input type="datetime-local" name="end_date"
+                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d\TH:i')) }}"
                                 class="form-control" required>
                             @error('end_date')
                                 <div style="color:red">{{ $message }}</div>

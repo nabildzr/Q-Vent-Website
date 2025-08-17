@@ -7,13 +7,23 @@ use App\Models\Event;
 use App\Models\EventPhoto;
 use App\Models\EventRegistrationLink;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class EventController extends Controller
 {
+    private function autoUpdateEventStatus()
+    {
+        Event::where('status', 'active')
+            ->where('end_date', '<', now())
+            ->update(['status' => 'done']);
+    }
+
     public function index()
     {
+        $this->autoUpdateEventStatus();
+
         $events = Event::all();
         return view('admin.event.index')->with([
             'events' => $events
@@ -40,8 +50,8 @@ class EventController extends Controller
             'location' => 'required',
             'event_category_id' => 'required|exists:event_categories,id',
             'created_by' => 'required|exists:users,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d\TH:i',
+            'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
             'banner' => 'nullable|image|max:2048',
             'qr_logo' => 'nullable|image|max:2048',
             'admins' => 'nullable|array',
@@ -70,7 +80,7 @@ class EventController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'banner' => $bannerPath,
-            'qr_logo' => $qrLogoPath,
+            'qr_logo' => $qrLogoPath ?? null,
         ]);
 
         $link = preg_replace('/[^a-z0-9]+/', '-', strtolower($request->title));
@@ -108,6 +118,8 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
+        $this->autoUpdateEventStatus();
+
         $allLinks = EventRegistrationLink::where('id', '!=', optional($event->registrationLink)->id)
             ->pluck('link')
             ->toArray();
@@ -139,8 +151,8 @@ class EventController extends Controller
             'event_category_id' => 'required|exists:event_categories,id',
             'created_by' => 'required|exists:users,id',
             'status' => 'required|in:active,done,cancelled',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d\TH:i',
+            'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
             'banner' => 'nullable|image|max:2048',
             'qr_logo' => 'nullable|image|max:2048',
             'admins' => 'nullable|array',
@@ -216,7 +228,6 @@ class EventController extends Controller
 
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }
-
     public function updateRegistrationLink(Request $request, $id)
     {
         $request->validate([

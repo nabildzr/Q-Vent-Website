@@ -73,7 +73,7 @@ class EventRegistrationController extends Controller
                     'label' => $nameCombined ? 'Nama' : 'Nama Belakang',
                     'name' => 'last_name',
                     'type' => 'text',
-                    'required' => false
+                    'required' => true
                 ];
             }
 
@@ -118,30 +118,40 @@ class EventRegistrationController extends Controller
 
     private function generateQRCodeAsBase64($text, $event)
     {
-        $logoPath = !empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)
-            ? storage_path('app/public/' . $event->qr_logo)
-            : public_path('images/logo.png');
+        $logoPath = null;
 
-        $builder = new Builder(
-            writer: new PngWriter(),
-            writerOptions: [],
-            validateResult: false,
-            data: $text,
-            encoding: new Encoding('UTF-8'),
-            errorCorrectionLevel: ErrorCorrectionLevel::High,
-            size: 300,
-            margin: 10,
-            roundBlockSizeMode: RoundBlockSizeMode::Margin,
-            logoPath: $logoPath,
-            logoResizeToWidth: 75,
-            logoPunchoutBackground: true
-        );
+        // Kalau ada logo di event & filenya ada di storage
+        if (!empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)) {
+            $logoPath = storage_path('app/public/' . $event->qr_logo);
+        }
+
+        // Build config dasar
+        $builderParams = [
+            'writer' => new PngWriter(),
+            'writerOptions' => [],
+            'validateResult' => false,
+            'data' => $text,
+            'encoding' => new Encoding('UTF-8'),
+            'errorCorrectionLevel' => ErrorCorrectionLevel::High,
+            'size' => 300,
+            'margin' => 10,
+            'roundBlockSizeMode' => RoundBlockSizeMode::Margin,
+        ];
+
+        // Tambahkan logo kalau ada
+        if ($logoPath) {
+            $builderParams['logoPath'] = $logoPath;
+            $builderParams['logoResizeToWidth'] = 75;
+            $builderParams['logoPunchoutBackground'] = true;
+        }
+
+        $builder = new Builder(...$builderParams);
 
         $result = $builder->build();
 
         return [
-            'dataUri' => $result->getDataUri(),  // untuk <img src="...">
-            'binary' => $result->getString()    // untuk lampiran email
+            'dataUri' => $result->getDataUri(),
+            'binary' => $result->getString()
         ];
     }
 
