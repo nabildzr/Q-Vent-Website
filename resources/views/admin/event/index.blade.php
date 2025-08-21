@@ -17,76 +17,83 @@
                 <a href="{{ route('admin.event.create') }}" class="btn btn-primary-600 radius-8 px-16 py-9">+ Tambah Event</a>
             </div>
             <div class="card-body">
-                <table class="table bordered-table mb-0" id="dataTable" data-page-length='10' style="overflow-x: auto;">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Judul</th>
-                            <th>Event Category</th>
-                            <th>Created By</th>
-                            <th>Start Date</th>
-                            <th>Banner</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($events as $event)
+                <div style="overflow-x: auto;">
+                    <table class="table bordered-table mb-0" id="dataTable" data-page-length='10' style="overflow-x: auto;">
+                        <thead>
                             <tr>
-                                <td>{{ $event->id }}</td>
-                                <td class="text-truncate" style="max-width: 120px;" title="{{ $event->title }}">{{ Str::limit($event->title, 15) }}</td>
-                                <td class="text-truncate" style="max-width: 120px;" title="{{ $event->eventCategory->name ?? '-' }}">{{ Str::limit($event->eventCategory->name ?? '-', 15) }}</td>
-                                <td class="text-truncate" style="max-width: 120px;" title="{{ $event->createdBy->name ?? '-' }}">{{ Str::limit($event->createdBy->name ?? '-', 15) }}</td>
-                                <td>{{ $event->start_date }}</td>
-                                <td>
-                                    @if ($event->banner)
-                                        <img src="{{ asset('storage/' . $event->banner) }}" alt="Banner"
-                                        class="object-fit-cover rounded" style="height: 30px; width: 30px;">
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span
-                                        class="@if ($event->status === 'active') bg-success-focus text-success-600
+                                <th>ID</th>
+                                <th>Judul</th>
+                                <th>Event Category</th>
+                                <th>Created By</th>
+                                <th>Start Date</th>
+                                <th>Banner</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($events as $event)
+                                <tr>
+                                    <td>{{ $event->id }}</td>
+                                    <td class="text-truncate" style="max-width: 120px;" title="{{ $event->title }}">
+                                        {{ Str::limit($event->title, 15) }}</td>
+                                    <td class="text-truncate" style="max-width: 120px;"
+                                        title="{{ $event->eventCategory->name ?? '-' }}">
+                                        {{ Str::limit($event->eventCategory->name ?? '-', 15) }}</td>
+                                    <td class="text-truncate" style="max-width: 120px;"
+                                        title="{{ $event->createdBy->name ?? '-' }}">
+                                        {{ Str::limit($event->createdBy->name ?? '-', 15) }}</td>
+                                    <td>{{ $event->start_date }}</td>
+                                    <td>
+                                        @if ($event->banner)
+                                            <img src="{{ asset('storage/' . $event->banner) }}" alt="Banner"
+                                                class="object-fit-cover rounded" style="height: 30px; width: 30px;">
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="@if ($event->status === 'active') bg-success-focus text-success-600
                                             @elseif ($event->status === 'done') bg-primary-100 text-primary-600
                                             @elseif ($event->status === 'cancelled') bg-danger-focus text-danger-600
                                             @else bg-secondary text-secondary-600 @endif
                                             px-16 py-6 rounded-pill fw-semibold text-xs">
-                                        {{ ucfirst($event->status) }}
-                                    </span>
-                                </td>
-                                <td class="d-flex gap-1">
-                                    <a href="{{ route('admin.event.show', $event->id) }}"
-                                        class="w-32-px h-32-px bg-primary-100 text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                                        title="Lihat Detail">
-                                        <iconify-icon icon="lucide:eye"></iconify-icon>
-                                    </a>
-                                    <a href="{{ route('admin.event.edit', $event->id) }}"
-                                        class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                                        title="Edit">
-                                        <iconify-icon icon="lucide:edit"></iconify-icon>
-                                    </a>
-                                    <form action="{{ route('admin.event.destroy', $event->id) }}" method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus event ini?')" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                                            title="Hapus">
-                                            <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8">Belum ada event.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                                            {{ ucfirst($event->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="d-flex gap-1">
+                                        <a href="{{ route('admin.event.show', $event->id) }}"
+                                            class="w-32-px h-32-px bg-primary-100 text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
+                                            title="Lihat Detail">
+                                            <iconify-icon icon="lucide:eye"></iconify-icon>
+                                        </a>
+                                        <a href="{{ route('admin.event.edit', $event->id) }}"
+                                            class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                            title="Edit">
+                                            <iconify-icon icon="lucide:edit"></iconify-icon>
+                                        </a>
+                                        <form action="{{ route('admin.event.destroy', $event->id) }}" method="POST"
+                                            onsubmit="return confirm('Yakin ingin menghapus event ini?')" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                title="Hapus">
+                                                <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8">Belum ada event.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
 
-                </table>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
+use App\Http\Controllers\AttendeeController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,18 @@ Route::prefix('admin')->group(function () {
         ->name('admin.event.input.edit');
     Route::post('/event/{event}/input-registration', [EventRegistrationController::class, 'updateInputs'])
         ->name('admin.event.input.update');
+
+    Route::get('/event/{event}/attendees', [AttendeeController::class, 'index'])
+        ->name('admin.attendee.index');
+
+    Route::resource('/attendee', AttendeeController::class)->names([
+        'create' => 'admin.attendee.create',
+        'store' => 'admin.attendee.store',
+        'show' => 'admin.attendee.show',
+        'edit' => 'admin.attendee.edit',
+        'update' => 'admin.attendee.update',
+        'destroy' => 'admin.attendee.destroy',
+    ])->except(['index']);
 
     // Route::get('/', [DashboardController::class, 'index']);
 });

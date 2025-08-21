@@ -90,9 +90,25 @@
                         </div>
                     </div>
 
-                    <a href="{{ route('registration.form', ['link' => $event->registrationLink->link]) }}" target="_blank" class="text-primary-600 text-decoration-underline">
-                        {{ url('event/' . $event->registrationLink->link) }}
-                    </a>
+                    <div class="col-md-6">
+                        <label class="fw-semibold text-muted">Daftar Attendee</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <a href="{{ route('admin.attendee.index', $event->id) }}" type="button"
+                                class="btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-14 py-6 text-sm">
+                                Daftar Attendee
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-semibold text-muted">Form Link</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <a href="{{ route('registration.form', ['link' => $event->registrationLink->link]) }}"
+                                target="_blank" class="text-primary-600 text-decoration-underline">
+                                {{ url('event/' . $event->registrationLink->link) }}
+                            </a>
+                        </div>
+                    </div>
 
                     <div class="col-md-12">
                         <label class="fw-semibold text-muted">Deskripsi</label>

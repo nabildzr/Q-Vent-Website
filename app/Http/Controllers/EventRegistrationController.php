@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Attendee;
+use App\Models\Attendance;
 use App\Models\EventRegistrationLink;
 use App\Models\CustomInputRegistration;
 use App\Models\CustomInputRegistrationValue;
 use App\Models\DefaultInputRegistrationStatus;
 use App\Models\QRCode;
+use App\Models\QRCodeLog;
 use App\Mail\SendQrCodeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -202,6 +204,15 @@ class EventRegistrationController extends Controller
             $attendee->update(['input_document' => $path]);
         }
 
+        // Simpan attendance record
+        Attendance::create([
+            'attendee_id' => $attendee->id,
+            'event_id' => $event->id,
+            'status' => 'present',
+            'check_in_time' => null,
+            'notes' => null,
+        ]);
+
         // Generate data QR
         $qrcodeData = $attendee->id . $attendee->code . 'event' . $event->id;
         $namePart = $attendee->first_name ?: $attendee->last_name ?: 'QR';
@@ -212,11 +223,19 @@ class EventRegistrationController extends Controller
         $qrResult = $this->generateQRCodeAsBase64($qrcodeData, $event);
 
         // Simpan QR data ke tabel qr_codes
-        QRCode::create([
+        $qrCode = QRCode::create([
             'event_id' => $event->id,
             'attendee_id' => $attendee->id,
             'qrcode_data' => $qrcodeData,
             'valid_until' => now()->addDays(7),
+        ]);
+
+        // Simpan log setelah QR code dibuat
+        QRCodeLog::create([
+            'qr_code_id' => $qrCode->id,
+            'attendee_id' => $attendee->id,
+            'user_id' => 1, // bisa ganti dengan Auth::id()
+            'status' => 'Not Scanned',
         ]);
 
         // Simpan custom input values

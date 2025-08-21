@@ -20,15 +20,28 @@ class Attendee extends Model
         'input_document',
     ];
 
-    public function event() {
+    public function event()
+    {
         return $this->belongsTo(Event::class);
     }
 
-    public function attendance() {
+    public function attendance()
+    {
         return $this->hasOne(Attendance::class);
     }
 
-    public function qrcode() {
+    public function qrcode()
+    {
         return $this->hasOne(QRCode::class);
+    }
+
+    public function qrCodeLogs()
+    {
+        return $this->hasMany(QRCodeLog::class);
+    }
+
+    public function customInputs()
+    {
+        return $this->hasMany(CustomInputRegistrationValue::class, 'attendee_id');
     }
 }
