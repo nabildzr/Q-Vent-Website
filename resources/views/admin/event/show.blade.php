@@ -39,12 +39,12 @@
 
                     <div class="col-md-6">
                         <label class="fw-semibold text-muted">Start Date</label>
-                        <p class="mb-0">{{ $event->start_date }}</p>
+                        <p class="mb-0">{{ \Carbon\Carbon::parse($event->start_date)->translatedFormat('l, d F Y H:i') }}</p>
                     </div>
 
                     <div class="col-md-6">
                         <label class="fw-semibold text-muted">End Date</label>
-                        <p class="mb-0">{{ $event->end_date }}</p>
+                        <p class="mb-0">{{ \Carbon\Carbon::parse($event->end_date)->translatedFormat('l, d F Y H:i') }}</p>
                     </div>
 
                     <div class="col-md-6">

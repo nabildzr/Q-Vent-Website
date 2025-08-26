@@ -62,9 +62,9 @@
                         {{-- Tanggal Mulai --}}
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Mulai</label>
-                            <input type="datetime-local" name="start_date"
-                                value="{{ old('start_date', optional($event->start_date)->format('Y-m-d\TH:i')) }}"
-                                class="form-control" required>
+                            <input type="text" id="start_date" name="start_date"
+                                value="{{ old('start_date', optional($event->start_date)->format('Y-m-d H:i')) }}"
+                                class="form-control flatpickr-datetime" required>
                             @error('start_date')
                                 <div style="color:red">{{ $message }}</div>
                             @enderror
@@ -73,9 +73,9 @@
                         {{-- Tanggal Selesai --}}
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Selesai</label>
-                            <input type="datetime-local" name="end_date"
-                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d\TH:i')) }}"
-                                class="form-control" required>
+                            <input type="text" id="end_date" name="end_date"
+                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d H:i')) }}"
+                                class="form-control flatpickr-datetime" required>
                             @error('end_date')
                                 <div style="color:red">{{ $message }}</div>
                             @enderror
@@ -258,7 +258,23 @@
 @endsection
 
 @section('beforeAppScripts')
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Optional: Tema dark/material -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+
     <script>
+        flatpickr(".flatpickr-datetime", {
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+            time_24hr: true,
+            locale: "id"
+        });
+
         // Preview banner
         const fileInput = document.getElementById("upload-file");
         const imagePreview = document.getElementById("uploaded-img__preview");

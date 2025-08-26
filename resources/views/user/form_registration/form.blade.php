@@ -15,8 +15,20 @@
         <h2 class="mb-4">Form Registrasi: {{ $event->title }}</h2>
 
         <form action="{{ route('registration.submit', ['link' => $event->registrationLink->link]) }}" method="POST"
-            enctype="multipart/form-data">
+            enctype="multipart/form-data" id="form-registrasi">
             @csrf
+
+            {{-- Error Message --}}
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>⚠ Terjadi Kesalahan:</strong>
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             {{-- Default Inputs --}}
             @foreach ($defaultInputs as $input)
@@ -57,8 +69,28 @@
                 </div>
             @endforeach
 
-            <button type="submit" class="btn">Kirim</button>
+            <button type="submit" class="btn" id="btn-submit">
+                <span class="btn-text">Kirim</span>
+                <span class="spinner d-none">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </span>
+            </button>
         </form>
+
+        <script>
+            document.getElementById('form-registrasi').addEventListener('submit', function(e) {
+                // cek dulu validasi HTML5
+                if (!this.checkValidity()) {
+                    return; // kalau form ada yg kosong required, jangan loading
+                }
+
+                const btn = document.getElementById('btn-submit');
+                btn.disabled = true;
+                btn.querySelector('.btn-text').innerText = "Loading...";
+                btn.querySelector('.spinner').classList.remove('d-none');
+            });
+        </script>
+
     </div>
 
 </body>

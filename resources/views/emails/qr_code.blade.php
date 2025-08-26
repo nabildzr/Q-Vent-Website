@@ -4,6 +4,8 @@
 
     // Embed gambar QR code sebagai CID (Content-ID)
     $qrCid = $message->embedData($qrBinary, $qrFilename, 'image/png');
+
+    $fullName = trim(($attendee->first_name ?: '') . ' ' . ($attendee->last_name ?: '')) ?: 'Peserta';
 @endphp
 
 <!DOCTYPE html>
@@ -34,7 +36,7 @@
                 </h2>
 
                 <p style="font-size: 15px; line-height: 1.6;">Halo
-                    <span style="font-weight: bold; color: #3F7CFF;">{{ $attendee->first_name ?? 'Peserta' }}</span>,</p>
+                    <span style="font-weight: bold; color: #3F7CFF;">{{ $fullName }}</span>,</p>
 
                 <p style="font-size: 15px; line-height: 1.6; margin-bottom: 20px;">
                     Terima kasih telah mendaftar di event <strong>{{ $event->title }}</strong>.

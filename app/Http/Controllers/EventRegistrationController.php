@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DeleteQrJob;
 use App\Models\Event;
 use App\Models\Attendee;
 use App\Models\Attendance;
@@ -12,6 +13,8 @@ use App\Models\DefaultInputRegistrationStatus;
 use App\Models\QRCode;
 use App\Models\QRCodeLog;
 use App\Mail\SendQrCodeMail;
+use Exception;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -22,6 +25,7 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
+use Twilio\Rest\Client;
 
 class EventRegistrationController extends Controller
 {
@@ -188,6 +192,20 @@ class EventRegistrationController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Cek duplikasi data (first_name, last_name, email, phone_number) di event yang sama
+        $exists = Attendee::where('event_id', $eventId)
+            ->where('first_name', $request->first_name)
+            ->where('last_name', $request->last_name)
+            ->where('email', $request->email)
+            ->where('phone_number', $request->phone_number)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'duplicate' => 'Data sudah pernah terdaftar di event ini!'
+            ])->withInput();
+        }
+
         // Simpan attendee
         $attendee = Attendee::create([
             'event_id' => $event->id,
@@ -217,7 +235,7 @@ class EventRegistrationController extends Controller
         $qrcodeData = $attendee->id . $attendee->code . 'event' . $event->id;
         $namePart = $attendee->first_name ?: $attendee->last_name ?: 'QR';
         $namePart = preg_replace('/[^A-Za-z0-9_\-]/', '_', $namePart);
-        $qrFilename = $namePart . '_' . $attendee->code . '.png';
+        $qrFilename = 'QR_' . $attendee->id . '_' . $namePart . '_' . $attendee->code . '.png';
 
         // Generate QR (Data URI + binary untuk lampiran email)
         $qrResult = $this->generateQRCodeAsBase64($qrcodeData, $event);
@@ -254,35 +272,83 @@ class EventRegistrationController extends Controller
         }
 
         // ======== KONDISI PENGIRIMAN QR ========
+
+        // 1. Kirim email kalau ada
         if (!empty($attendee->email)) {
-            // Kirim QR via Email
             \Mail::to($attendee->email)->send(
                 new SendQrCodeMail($event, $attendee, $qrResult['binary'], $qrFilename)
             );
+        }
 
-            return view('user.form_registration.thankyou', [
-                'event' => $event,
-                'showQr' => false,
-                'qrData' => null
-            ]);
-        } elseif (!empty($attendee->phone_number)) {
-            // Placeholder kirim via WhatsApp/SMS
-            // Contoh: kirim link atau base64 QR ke API WhatsApp
-            // WhatsAppService::sendQr($attendee->phone_number, $qrResult['binary']);
+        // 2. Kirim WA kalau ada
+        if (!empty($attendee->phone_number)) {
+            $twilioSid = env('TWILIO_SID');
+            $twilioToken = env('TWILIO_TOKEN');
+            $twilioWhatsappFrom = env('TWILIO_FROM');
 
-            return view('user.form_registration.thankyou', [
-                'event' => $event,
-                'showQr' => false,
-                'qrData' => null
-            ]);
-        } else {
-            // Tampilkan QR langsung di halaman
+            if ($twilioSid && $twilioToken && $twilioWhatsappFrom) {
+                $client = new Client($twilioSid, $twilioToken);
+
+                try {
+                    $qrPath = 'qrcodes/' . $qrFilename;
+                    Storage::disk('public')->put($qrPath, $qrResult['binary']);
+                    $qrUrl = asset('storage/' . $qrPath);
+
+                    // Format tanggal mulai & selesai event
+                    $startDate = Carbon::parse($event->start_date)->locale('id')->translatedFormat('l, d F Y H:i'); // Example: Senin, 01 Januari 2024 14:00
+                    $endDate = Carbon::parse($event->end_date)->locale('id')->translatedFormat('l, d F Y H:i'); // Example: Senin, 01 Januari 2024 16:00
+
+                    // Nama lengkap atau fallback ke "Peserta"
+                    $fullName = trim(($attendee->first_name ?: '') . ' ' . ($attendee->last_name ?: '')) ?: 'Peserta';
+
+                    // Pesan WhatsApp
+                    $body = "Halo *{$fullName}!* 🎉\n\n";
+                    $body .= "Terima kasih sudah mendaftar di *{$event->title}*.\n\n";
+                    $body .= "📅 Jadwal:\n";
+                    $body .= "   • Mulai: *{$startDate}*\n";
+                    $body .= "   • Selesai: *{$endDate}*\n\n";
+                    $body .= "📍 Lokasi: *{$event->location}*\n\n";
+                    $body .= "Silakan gunakan QR Code berikut untuk absensi event.\n\n";
+                    $body .= "_*Jangan bagikan QR ini ke orang lain.*_";
+
+                    $client->messages->create(
+                        "whatsapp:{$attendee->phone_number}",
+                        [
+                            'from' => "whatsapp:$twilioWhatsappFrom",
+                            'body' => $body,
+                            'mediaUrl' => [$qrUrl],
+                        ]
+                    );
+
+                    // Dispatch job delete dengan delay 1 menit
+                    dispatch(new DeleteQrJob($qrPath))
+                        ->delay(now()->addMinute());
+
+                } catch (Exception $e) {
+                    return response()->json([
+                        'message' => 'Failed to send WhatsApp message',
+                        'error' => $e->getMessage(),
+                        'phone_formatted' => $request->phone_number,
+                    ], 500);
+                }
+            }
+        }
+
+        // 3. Kalau gak ada email & gak ada WA → tampilkan QR di blade
+        if (empty($attendee->email) && empty($attendee->phone_number)) {
             return view('user.form_registration.thankyou', [
                 'event' => $event,
                 'showQr' => true,
                 'qrData' => $qrResult['dataUri']
             ]);
         }
+
+        // Default return → thankyou page tanpa QR (karena udah dikirim via email/WA)
+        return view('user.form_registration.thankyou', [
+            'event' => $event,
+            'showQr' => false,
+            'qrData' => null
+        ]);
     }
 
     /**

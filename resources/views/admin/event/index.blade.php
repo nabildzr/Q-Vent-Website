@@ -43,7 +43,7 @@
                                     <td class="text-truncate" style="max-width: 120px;"
                                         title="{{ $event->createdBy->name ?? '-' }}">
                                         {{ Str::limit($event->createdBy->name ?? '-', 15) }}</td>
-                                    <td>{{ $event->start_date }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($event->start_date)->translatedFormat('l, d F Y H:i') }}</td>
                                     <td>
                                         @if ($event->banner)
                                             <img src="{{ asset('storage/' . $event->banner) }}" alt="Banner"
