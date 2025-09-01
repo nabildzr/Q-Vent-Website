@@ -34,24 +34,8 @@
                                 @error('name')
                                     <div style="color:red">{{ $message }}</div>
                                 @enderror
-                                {{-- <div class="invalid-feedback">
-                                Please provide name
-                            </div> --}}
                             </div>
                         </div>
-
-                        {{-- <div class="col-md-6">
-                <label class="form-label">Last Name</label>
-                <div class="icon-field has-validation">
-                  <span class="icon">
-                    <iconify-icon icon="f7:person"></iconify-icon>
-                  </span>
-                  <input type="text" name="#0" class="form-control" placeholder="Enter Last Name" required>
-                  <div class="invalid-feedback">
-                    Please provide last name
-                  </div>
-                </div>
-              </div> --}}
 
                         <div class="col-md-6">
                             <label class="form-label">Email</label>

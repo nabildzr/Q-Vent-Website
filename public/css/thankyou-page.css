@@ -9,13 +9,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px; /* biar aman di layar kecil */
+    padding: 20px;
     min-height: 100vh;
 }
 
 .thankyou-content {
     display: flex;
-    flex-direction: column; /* default mobile: susun vertikal */
+    flex-direction: column;
     align-items: center;
     background: #fff;
     padding: 20px;
@@ -55,7 +55,7 @@ body {
 .button-group {
     margin-top: 20px;
     display: flex;
-    flex-direction: column; /* mobile: tombol susun */
+    flex-direction: column;
     gap: 10px;
     width: 100%;
 }
@@ -91,13 +91,13 @@ body {
 /* Tablet & Desktop */
 @media (min-width: 768px) {
     .thankyou-content {
-        flex-direction: row; /* tablet ke atas: sejajar */
+        flex-direction: row;
         text-align: left;
         padding: 30px 40px;
     }
 
     .button-group {
-        flex-direction: row; /* tombol jadi sejajar */
+        flex-direction: row;
         width: auto;
     }
 

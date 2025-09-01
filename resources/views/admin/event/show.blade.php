@@ -102,11 +102,32 @@
 
                     <div class="col-md-6">
                         <label class="fw-semibold text-muted">Form Link</label>
-                        <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center justify-content-between gap-3">
                             <a href="{{ route('registration.form', ['link' => $event->registrationLink->link]) }}"
                                 target="_blank" class="text-primary-600 text-decoration-underline">
                                 {{ url('event/' . $event->registrationLink->link) }}
                             </a>
+
+                            @if ($event->registrationLink)
+                                @php
+                                    $expired =
+                                        $event->registrationLink->valid_until &&
+                                        now()->gt($event->registrationLink->valid_until);
+                                @endphp
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span
+                                        class="px-16 py-6 rounded-pill fw-semibold text-xs
+                                        {{ $expired ? 'bg-danger-focus text-danger-600' : 'bg-success-focus text-success-600' }}">
+                                        {{ $expired ? 'Closed' : 'Active' }}
+                                    </span>
+                                    @if ($event->registrationLink->valid_until)
+                                        <span class="text-xs text-gray-600">
+                                            Expired In:
+                                            {{ \Carbon\Carbon::parse($event->registrationLink->valid_until)->translatedFormat('d F Y') }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -243,8 +264,9 @@
                             </div>
                             <div class="mb-3">
                                 <label for="valid_until" class="form-label">Valid Until</label>
-                                <input type="date" name="valid_until" class="form-control" id="valid_until"
-                                    value="{{ optional($event->registrationLink->valid_until)->format('Y-m-d') }}"
+                                <input type="text" name="valid_until" class="form-control flatpickr-datetime"
+                                    id="valid_until"
+                                    value="{{ optional($event->registrationLink->valid_until)->format('Y-m-d H:i') }}"
                                     required>
                             </div>
                         </div>
@@ -264,7 +286,21 @@
     @section('beforeAppScripts')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+        <!-- Flatpickr JS -->
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+
         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                flatpickr("#valid_until", {
+                    enableTime: true,
+                    dateFormat: "Y-m-d\\TH:i",
+                    time_24hr: true,
+                    locale: "id",
+                    defaultDate: "{{ optional($event->registrationLink->valid_until)->format('Y-m-d H:i') }}"
+                });
+            });
+
             const existingLinks = @json($allLinks);
             const currentLink = '{{ $event->registrationLink->link ?? '' }}';
 

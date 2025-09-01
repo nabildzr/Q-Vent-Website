@@ -25,7 +25,11 @@
 
                 <div class="button-group">
                     @if ($showQr)
-                        <a href="{{ $qrData }}" download="QR_{{ $event->id }}.png" class="btn btn-primary">Download QR Code</a>
+                        @php
+                            $namePart = Str::slug($attendee->first_name ?: $attendee->last_name ?: 'peserta', '_');
+                            $fileName = 'QR_' . $attendee->id . '_' . $namePart . '_' . $attendee->code . '.png';
+                        @endphp
+                        <a href="{{ $qrData }}" download="{{ $fileName }}" class="btn btn-primary">Download QR Code</a>
                     @endif
                     <a href="{{ url()->previous() }}" class="btn btn-secondary">Kembali ke Form</a>
                 </div>

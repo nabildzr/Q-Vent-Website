@@ -20,14 +20,20 @@ class EventController extends Controller
             ->update(['status' => 'done']);
     }
 
+    private function autoUpdateRegistrationLinkStatus()
+    {
+        EventRegistrationLink::where('status', 'open')
+            ->where('valid_until', '<', now())
+            ->update(['status' => 'closed']);
+    }
+
     public function index()
     {
         $this->autoUpdateEventStatus();
+        $this->autoUpdateRegistrationLinkStatus();
 
-        $events = Event::all();
-        return view('admin.event.index')->with([
-            'events' => $events
-        ]);
+        $events = Event::with('registrationLink')->get();
+        return view('admin.event.index', compact('events'));
     }
 
     public function create()
@@ -83,6 +89,7 @@ class EventController extends Controller
             'qr_logo' => $qrLogoPath ?? null,
         ]);
 
+        // Buat link pendaftaran event
         $link = preg_replace('/[^a-z0-9]+/', '-', strtolower($request->title));
         $link = trim($link, '-');
 
@@ -93,11 +100,17 @@ class EventController extends Controller
             $link = $baseLink . '-' . $counter++;
         }
 
+        // Validasi tanggal valid_until
+        $validUntil = Carbon::parse($event->start_date)->subDay()->endOfDay();
+        if ($validUntil->isPast()) {
+            $validUntil = now()->endOfDay(); // fallback biar ga langsung expired
+        }
+
         EventRegistrationLink::create([
             'event_id' => $event->id,
-            'status_id' => 'open',
+            'status' => 'open',
             'link' => $link,
-            'valid_until' => now()->addDays(30),
+            'valid_until' => $validUntil,
         ]);
 
         // Simpan admin pendamping (jika ada)
@@ -226,6 +239,16 @@ class EventController extends Controller
             }
         }
 
+        // Kalau event punya registration link
+        if ($event->registrationLink) {
+            // Kalau admin tidak isi manual di modal, set default ke H-1 start_date
+            if (!$request->has('valid_until') || empty($request->valid_until)) {
+                $event->registrationLink->update([
+                    'valid_until' => Carbon::parse($event->start_date)->subDay()->endOfDay(),
+                ]);
+            }
+        }
+
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }
     public function updateRegistrationLink(Request $request, $id)
@@ -242,9 +265,13 @@ class EventController extends Controller
 
         $link = EventRegistrationLink::findOrFail($id);
 
+        $validUntil = Carbon::parse($request->valid_until);
+        $status = $validUntil->isPast() ? 'closed' : 'open';
+
         $link->update([
             'link' => $request->link,
             'valid_until' => $request->valid_until,
+            'status' => $status,
         ]);
 
         return redirect()->back()->with('success', 'Registration link berhasil diperbarui.');

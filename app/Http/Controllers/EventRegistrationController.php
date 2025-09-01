@@ -30,15 +30,35 @@ use Twilio\Rest\Client;
 class EventRegistrationController extends Controller
 {
     /**
+     * Auto update status link expired
+     */
+    private function autoUpdateRegistrationLinkStatus()
+    {
+        EventRegistrationLink::where('status', 'open')
+            ->where('valid_until', '<', now())
+            ->update(['status' => 'closed']);
+    }
+
+    /**
      * Menampilkan form registrasi ke peserta.
      */
     public function showForm($link)
     {
+        // sync dulu status link expired
+        $this->autoUpdateRegistrationLinkStatus();
 
-        $registrationLink = EventRegistrationLink::where('link', $link)
-            ->where('status', 'open')
-            ->where('valid_until', '>=', now())
-            ->firstOrFail();
+        $registrationLink = EventRegistrationLink::where('link', $link)->first();
+
+        if (!$registrationLink) {
+            abort(404, 'Link tidak ditemukan.');
+        }
+
+        if ($registrationLink->status === 'closed') {
+            return response()->view('user.form_registration.closed', [
+                'event' => $registrationLink->event,
+                'message' => 'Pendaftaran untuk event ini sudah ditutup.'
+            ]);
+        }
 
         $event = $registrationLink->event;
 
@@ -338,6 +358,7 @@ class EventRegistrationController extends Controller
         if (empty($attendee->email) && empty($attendee->phone_number)) {
             return view('user.form_registration.thankyou', [
                 'event' => $event,
+                'attendee' => $attendee,
                 'showQr' => true,
                 'qrData' => $qrResult['dataUri']
             ]);
