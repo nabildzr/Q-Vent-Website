@@ -13,13 +13,18 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Detail Attendee: {{ $attendee->first_name }} {{ $attendee->last_name }}</h5>
             <div class="d-flex gap-2">
-                @if ($event->status === 'active')
-                    <a href="{{ route('admin.attendee.edit', $attendee->id) }}"
-                        class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                        title="Edit">
-                        <iconify-icon icon="lucide:edit"></iconify-icon>
-                    </a>
-                @endif
+                {{-- hanya bisa edit attendee kalau bisa update event & status event masih active --}}
+                @can('update', $event)
+                    @if ($event->status === 'active')
+                        <a href="{{ route('admin.attendee.edit', $attendee->id) }}"
+                            class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                            title="Edit">
+                            <iconify-icon icon="lucide:edit"></iconify-icon>
+                        </a>
+                    @endif
+                @endcan
+
+                {{-- tombol kembali selalu ada --}}
                 <a href="{{ route('admin.attendee.index', $attendee->event_id) }}"
                     class="w-32-px h-32-px bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
                     title="Kembali">

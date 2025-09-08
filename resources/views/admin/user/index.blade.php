@@ -14,8 +14,10 @@
         <div class="card basic-data-table">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Daftar User</h5>
-                <a href="{{ route('admin.user.create') }}" class="btn btn-primary-600 radius-8 px-16 py-9">+ Tambah
-                    User</a>
+                @can('isSuperAdmin')
+                    <a href="{{ route('admin.user.create') }}" class="btn btn-primary-600 radius-8 px-16 py-9">+ Tambah
+                        User</a>
+                @endcan
             </div>
             <div class="card-body">
                 <div style="overflow-x: auto;">
@@ -39,18 +41,20 @@
                                     <td>{{ $user->phone_number }}</td>
                                     <td>{{ $user->role }}</td>
                                     <td>
-                                        <a href="{{ route('admin.user.edit', $user->id) }}"
-                                            class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"><iconify-icon
-                                                icon="lucide:edit"></iconify-icon></a>
-                                        <form action="{{ route('admin.user.destroy', $user->id) }}" method="POST"
-                                            onsubmit="return confirm('Yakin ingin menghapus user ini?')"
-                                            class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit">
-                                                <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
-                                            </button>
-                                        </form>
+                                        @can('isSuperAdmin')
+                                            <a href="{{ route('admin.user.edit', $user->id) }}"
+                                                class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"><iconify-icon
+                                                    icon="lucide:edit"></iconify-icon></a>
+                                            <form action="{{ route('admin.user.destroy', $user->id) }}" method="POST"
+                                                onsubmit="return confirm('Yakin ingin menghapus user ini?')"
+                                                class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit">
+                                                    <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
+                                                </button>
+                                            </form>
+                                        @endcan
                                     </td>
                                 </tr>
                             @endforeach

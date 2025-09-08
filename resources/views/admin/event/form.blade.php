@@ -114,20 +114,10 @@
                         @endif
 
                         {{-- Admin --}}
+                        <input type="hidden" name="created_by" value="{{ auth()->user()->id }}">
                         <div class="col-md-6">
                             <label class="form-label">Administrator Event</label>
-                            <select name="created_by" class="form-select" required>
-                                <option value="">Pilih Administrator Event</option>
-                                @foreach (\App\Models\User::all() as $user)
-                                    <option value="{{ $user->id }}"
-                                        {{ old('created_by', $event->created_by) == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('created_by')
-                                <div style="color:red">{{ $message }}</div>
-                            @enderror
+                            <input type="text" class="form-control" value="{{ auth()->user()->name }}" disabled>
                         </div>
 
                         {{-- Banner Upload --}}

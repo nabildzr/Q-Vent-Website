@@ -272,7 +272,7 @@ class EventRegistrationController extends Controller
         QRCodeLog::create([
             'qr_code_id' => $qrCode->id,
             'attendee_id' => $attendee->id,
-            'user_id' => 1, // bisa ganti dengan Auth::id()
+            'user_id' => auth()->id() ?? 1,
             'status' => 'Not Scanned',
         ]);
 
@@ -375,11 +375,12 @@ class EventRegistrationController extends Controller
     /**
      * Admin: Tampilkan form edit input registrasi (default + custom).
      */
-    public function editInputs($eventId)
+    public function editInputs(Event $event)
     {
-        $event = Event::findOrFail($eventId);
-        $defaultInputs = DefaultInputRegistrationStatus::firstOrCreate(['event_id' => $eventId]);
-        $customInputs = CustomInputRegistration::where('event_id', $eventId)->get();
+        $this->authorize('update', $event);
+
+        $defaultInputs = DefaultInputRegistrationStatus::firstOrCreate(['event_id' => $event->id]);
+        $customInputs = CustomInputRegistration::where('event_id', $event->id)->get();
 
         return view('admin.event_registration.admin_input_form', compact('event', 'defaultInputs', 'customInputs'));
     }
@@ -387,10 +388,12 @@ class EventRegistrationController extends Controller
     /**
      * Admin: Simpan pengaturan input (default + custom).
      */
-    public function updateInputs(Request $request, $eventId)
+    public function updateInputs(Request $request, Event $event)
     {
+        $this->authorize('update', $event);
+
         $default = DefaultInputRegistrationStatus::updateOrCreate(
-            ['event_id' => $eventId],
+            ['event_id' => $event->id],
             [
                 'input_document' => $request->has('input_document'),
                 'input_first_name' => $request->has('input_first_name'),
@@ -401,7 +404,7 @@ class EventRegistrationController extends Controller
         );
 
         // Ambil semua custom input lama dari DB
-        $existingCustomInputs = CustomInputRegistration::where('event_id', $eventId)->get()->keyBy('id');
+        $existingCustomInputs = CustomInputRegistration::where('event_id', $event->id)->get()->keyBy('id');
 
         // Custom input dari request
         $submittedInputs = $request->input('custom_inputs', []);
@@ -410,16 +413,27 @@ class EventRegistrationController extends Controller
         foreach ($submittedInputs as $id => $data) {
             $status = isset($data['status']) && $data['status'] == '1';
 
-            CustomInputRegistration::updateOrCreate(
-                ['id' => $id, 'event_id' => $eventId],
-                [
+            $customInput = CustomInputRegistration::find($id);
+
+            if ($customInput) {
+                // Record sudah ada → cuma update
+                $customInput->update([
                     'name' => $data['name'],
                     'type' => $data['type'],
                     'status' => $status,
-                    'created_by' => Auth::id() ?? 1,
-                    'updated_by' => Auth::id() ?? 1,
-                ]
-            );
+                    'updated_by' => Auth::id(),
+                ]);
+            } else {
+                // Record baru → set created_by & updated_by
+                CustomInputRegistration::create([
+                    'event_id' => $event->id,
+                    'name' => $data['name'],
+                    'type' => $data['type'],
+                    'status' => $status,
+                    'created_by' => Auth::id(),
+                    'updated_by' => Auth::id(),
+                ]);
+            }
 
             // Hapus dari list existing karena sudah diproses
             $existingCustomInputs->forget($id);
@@ -435,7 +449,7 @@ class EventRegistrationController extends Controller
 
         $deletedIds = array_filter(explode(',', $request->input('deleted_input_ids', '')));
         if (count($deletedIds)) {
-            CustomInputRegistration::where('event_id', $eventId)
+            CustomInputRegistration::where('event_id', $event->id)
                 ->whereIn('id', $deletedIds)
                 ->delete();
         }

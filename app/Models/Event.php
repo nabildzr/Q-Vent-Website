@@ -42,7 +42,7 @@ class Event extends Model
 
     public function admins()
     {
-        return $this->belongsToMany(User::class, 'event_admins');
+        return $this->belongsToMany(User::class, 'event_admins', 'event_id', 'user_id');
     }
 
     public function createdBy()

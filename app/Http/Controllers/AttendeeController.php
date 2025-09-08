@@ -8,23 +8,24 @@ use Illuminate\Http\Request;
 
 class AttendeeController extends Controller
 {
-    public function index($eventId)
+    public function index(Event $event)
     {
-        $event = Event::findOrFail($eventId);
-        $attendees = $event->attendees()->with('attendance')->get();
+        $this->authorize('view', $event);
 
+        $attendees = $event->attendees()->with('attendance')->get();
         return view('admin.attendee.index', compact('event', 'attendees'));
     }
 
-    public function edit($id)
+    public function edit(Attendee $attendee)
     {
-        $attendee = Attendee::findOrFail($id);
+        $this->authorize('update', $attendee->event);
+
         return view('admin.attendee.edit', compact('attendee'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Attendee $attendee)
     {
-        $attendee = Attendee::findOrFail($id);
+        $this->authorize('update', $attendee->event);
 
         $request->validate([
             'first_name' => 'required|string|max:100',
@@ -36,30 +37,30 @@ class AttendeeController extends Controller
         $attendee->update($request->only(['first_name', 'last_name', 'email', 'phone_number']));
 
         return redirect()
-            ->route('admin.attendee.index', $attendee->event_id) // kirim event_id biar balik ke daftar
+            ->route('admin.attendee.index', $attendee->event_id)
             ->with('success', 'Data attendee berhasil diperbarui.');
     }
 
-    public function show($id)
+    public function show(Attendee $attendee)
     {
-        $attendee = Attendee::with([
+        $this->authorize('view', $attendee->event);
+
+        $attendee->load([
             'event',
-            'qrCodeLogs' => function ($q) {
-                $q->latest();
-            },
+            'qrCodeLogs' => fn($q) => $q->latest(),
             'customInputs'
-        ])->findOrFail($id);
-        $event = $attendee->event;
+        ]);
 
         $attendance = $attendee->qrCodeLogs->first();
+        $event = $attendee->event;
 
         return view('admin.attendee.show', compact('attendee', 'attendance', 'event'));
     }
 
-
-    public function destroy($id)
+    public function destroy(Attendee $attendee)
     {
-        $attendee = Attendee::findOrFail($id);
+        $this->authorize('delete', $attendee->event);
+
         $attendee->delete();
 
         return redirect()->back()->with('success', 'Data attendee berhasil dihapus.');

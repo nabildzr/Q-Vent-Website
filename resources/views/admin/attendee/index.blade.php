@@ -60,29 +60,34 @@
                                             <iconify-icon icon="lucide:eye"></iconify-icon>
                                         </a>
 
-                                        {{-- kondisi tombol berdasarkan status event --}}
-                                        @if ($event->status === 'done')
-                                            {{-- tombol DELETE --}}
-                                            <form action="{{ route('admin.attendee.destroy', $attendee->id) }}"
-                                                method="POST"
-                                                onsubmit="return confirm('Yakin ingin menghapus attendee ini?')"
-                                                class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                                                    title="Hapus">
-                                                    <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
-                                                </button>
-                                            </form>
-                                        @else
-                                            {{-- tombol EDIT --}}
-                                            <a href="{{ route('admin.attendee.edit', $attendee->id) }}"
-                                                class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                                                title="Edit">
-                                                <iconify-icon icon="lucide:edit"></iconify-icon>
-                                            </a>
-                                        @endif
+                                        {{-- hanya boleh edit kalau boleh update event --}}
+                                        @can('update', $event)
+                                            @if ($event->status !== 'done')
+                                                <a href="{{ route('admin.attendee.edit', $attendee->id) }}"
+                                                    class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                    title="Edit">
+                                                    <iconify-icon icon="lucide:edit"></iconify-icon>
+                                                </a>
+                                            @endif
+                                        @endcan
+
+                                        {{-- hanya boleh delete kalau boleh delete event --}}
+                                        @can('delete', $event)
+                                            @if ($event->status === 'done')
+                                                <form action="{{ route('admin.attendee.destroy', $attendee->id) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Yakin ingin menghapus attendee ini?')"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                        title="Hapus">
+                                                        <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty
