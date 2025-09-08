@@ -9,6 +9,30 @@
             <x-slot:icon>solar:home-smile-angle-outline</x-slot:icon>
         </x-breadcrumb>
 
+        @if (session('alert'))
+            <div id="auto-alert"
+                class="alert alert-warning bg-warning-100 text-warning-600 border-warning-100 px-24 py-11 mb-14 fw-semibold text-lg radius-8 d-flex align-items-center justify-content-between"
+                role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <iconify-icon icon="mdi:alert-circle-outline" class="icon text-xl"></iconify-icon>
+                    {{ session('alert.message') }}
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const alert = document.getElementById('auto-alert');
+                    if (alert) {
+                        setTimeout(() => {
+                            alert.style.transition = "opacity 0.5s ease-out";
+                            alert.style.opacity = '0';
+                            setTimeout(() => alert.remove(), 500);
+                        }, 3000);
+                    }
+                });
+            </script>
+        @endif
+
         <div class="row row-cols-xxxl-5 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4">
             <div class="col">
                 <div class="card shadow-none border bg-gradient-start-1 h-100">

@@ -18,7 +18,7 @@ class Attendance extends Model
         'notes',
     ];
 
-    public function attendance() {
+    public function attendee() {
         return $this->belongsTo(Attendee::class);
     }
 

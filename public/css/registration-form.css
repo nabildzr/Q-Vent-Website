@@ -68,7 +68,7 @@ textarea:focus {
 /* Submit Button */
 .btn {
     display: inline-block;
-    background-color: #3F7CFF;  
+    background-color: #3F7CFF;
     color: #fff;
     font-size: 1rem;
     font-weight: 500;
@@ -83,6 +83,40 @@ textarea:focus {
 .btn:hover {
     background-color: #2567f7;
 }
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner {
+    margin-left: 8px;
+    font-size: 14px;
+}
+
+.alert {
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    color: #842029;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.alert li {
+    margin: 4px 0;
+}
+
 
 /* Error */
 .invalid-feedback {

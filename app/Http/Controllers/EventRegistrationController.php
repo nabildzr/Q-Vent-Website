@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DeleteQrJob;
 use App\Models\Event;
 use App\Models\Attendee;
+use App\Models\Attendance;
 use App\Models\EventRegistrationLink;
 use App\Models\CustomInputRegistration;
 use App\Models\CustomInputRegistrationValue;
 use App\Models\DefaultInputRegistrationStatus;
 use App\Models\QRCode;
+use App\Models\QRCodeLog;
 use App\Mail\SendQrCodeMail;
+use Exception;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -20,19 +25,40 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
+use Twilio\Rest\Client;
 
 class EventRegistrationController extends Controller
 {
+    /**
+     * Auto update status link expired
+     */
+    private function autoUpdateRegistrationLinkStatus()
+    {
+        EventRegistrationLink::where('status', 'open')
+            ->where('valid_until', '<', now())
+            ->update(['status' => 'closed']);
+    }
+
     /**
      * Menampilkan form registrasi ke peserta.
      */
     public function showForm($link)
     {
+        // sync dulu status link expired
+        $this->autoUpdateRegistrationLinkStatus();
 
-        $registrationLink = EventRegistrationLink::where('link', $link)
-            ->where('status', 'open')
-            ->where('valid_until', '>=', now())
-            ->firstOrFail();
+        $registrationLink = EventRegistrationLink::where('link', $link)->first();
+
+        if (!$registrationLink) {
+            abort(404, 'Link tidak ditemukan.');
+        }
+
+        if ($registrationLink->status === 'closed') {
+            return response()->view('user.form_registration.closed', [
+                'event' => $registrationLink->event,
+                'message' => 'Pendaftaran untuk event ini sudah ditutup.'
+            ]);
+        }
 
         $event = $registrationLink->event;
 
@@ -73,7 +99,7 @@ class EventRegistrationController extends Controller
                     'label' => $nameCombined ? 'Nama' : 'Nama Belakang',
                     'name' => 'last_name',
                     'type' => 'text',
-                    'required' => false
+                    'required' => true
                 ];
             }
 
@@ -118,30 +144,40 @@ class EventRegistrationController extends Controller
 
     private function generateQRCodeAsBase64($text, $event)
     {
-        $logoPath = !empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)
-            ? storage_path('app/public/' . $event->qr_logo)
-            : public_path('images/logo.png');
+        $logoPath = null;
 
-        $builder = new Builder(
-            writer: new PngWriter(),
-            writerOptions: [],
-            validateResult: false,
-            data: $text,
-            encoding: new Encoding('UTF-8'),
-            errorCorrectionLevel: ErrorCorrectionLevel::High,
-            size: 300,
-            margin: 10,
-            roundBlockSizeMode: RoundBlockSizeMode::Margin,
-            logoPath: $logoPath,
-            logoResizeToWidth: 75,
-            logoPunchoutBackground: true
-        );
+        // Kalau ada logo di event & filenya ada di storage
+        if (!empty($event->qr_logo) && Storage::disk('public')->exists($event->qr_logo)) {
+            $logoPath = storage_path('app/public/' . $event->qr_logo);
+        }
+
+        // Build config dasar
+        $builderParams = [
+            'writer' => new PngWriter(),
+            'writerOptions' => [],
+            'validateResult' => false,
+            'data' => $text,
+            'encoding' => new Encoding('UTF-8'),
+            'errorCorrectionLevel' => ErrorCorrectionLevel::High,
+            'size' => 300,
+            'margin' => 10,
+            'roundBlockSizeMode' => RoundBlockSizeMode::Margin,
+        ];
+
+        // Tambahkan logo kalau ada
+        if ($logoPath) {
+            $builderParams['logoPath'] = $logoPath;
+            $builderParams['logoResizeToWidth'] = 75;
+            $builderParams['logoPunchoutBackground'] = true;
+        }
+
+        $builder = new Builder(...$builderParams);
 
         $result = $builder->build();
 
         return [
-            'dataUri' => $result->getDataUri(),  // untuk <img src="...">
-            'binary' => $result->getString()    // untuk lampiran email
+            'dataUri' => $result->getDataUri(),
+            'binary' => $result->getString()
         ];
     }
 
@@ -176,6 +212,20 @@ class EventRegistrationController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Cek duplikasi data (first_name, last_name, email, phone_number) di event yang sama
+        $exists = Attendee::where('event_id', $eventId)
+            ->where('first_name', $request->first_name)
+            ->where('last_name', $request->last_name)
+            ->where('email', $request->email)
+            ->where('phone_number', $request->phone_number)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'duplicate' => 'Data sudah pernah terdaftar di event ini!'
+            ])->withInput();
+        }
+
         // Simpan attendee
         $attendee = Attendee::create([
             'event_id' => $event->id,
@@ -192,21 +242,38 @@ class EventRegistrationController extends Controller
             $attendee->update(['input_document' => $path]);
         }
 
+        // Simpan attendance record
+        Attendance::create([
+            'attendee_id' => $attendee->id,
+            'event_id' => $event->id,
+            'status' => 'present',
+            'check_in_time' => null,
+            'notes' => null,
+        ]);
+
         // Generate data QR
         $qrcodeData = $attendee->id . $attendee->code . 'event' . $event->id;
         $namePart = $attendee->first_name ?: $attendee->last_name ?: 'QR';
         $namePart = preg_replace('/[^A-Za-z0-9_\-]/', '_', $namePart);
-        $qrFilename = $namePart . '_' . $attendee->code . '.png';
+        $qrFilename = 'QR_' . $attendee->id . '_' . $namePart . '_' . $attendee->code . '.png';
 
         // Generate QR (Data URI + binary untuk lampiran email)
         $qrResult = $this->generateQRCodeAsBase64($qrcodeData, $event);
 
         // Simpan QR data ke tabel qr_codes
-        QRCode::create([
+        $qrCode = QRCode::create([
             'event_id' => $event->id,
             'attendee_id' => $attendee->id,
             'qrcode_data' => $qrcodeData,
             'valid_until' => now()->addDays(7),
+        ]);
+
+        // Simpan log setelah QR code dibuat
+        QRCodeLog::create([
+            'qr_code_id' => $qrCode->id,
+            'attendee_id' => $attendee->id,
+            'user_id' => auth()->id() ?? 1,
+            'status' => 'Not Scanned',
         ]);
 
         // Simpan custom input values
@@ -225,45 +292,95 @@ class EventRegistrationController extends Controller
         }
 
         // ======== KONDISI PENGIRIMAN QR ========
+
+        // 1. Kirim email kalau ada
         if (!empty($attendee->email)) {
-            // Kirim QR via Email
             \Mail::to($attendee->email)->send(
                 new SendQrCodeMail($event, $attendee, $qrResult['binary'], $qrFilename)
             );
+        }
 
-            return view('user.form_registration.thankyou', [
-                'event' => $event,
-                'showQr' => false,
-                'qrData' => null
-            ]);
-        } elseif (!empty($attendee->phone_number)) {
-            // Placeholder kirim via WhatsApp/SMS
-            // Contoh: kirim link atau base64 QR ke API WhatsApp
-            // WhatsAppService::sendQr($attendee->phone_number, $qrResult['binary']);
+        // 2. Kirim WA kalau ada
+        if (!empty($attendee->phone_number)) {
+            $twilioSid = env('TWILIO_SID');
+            $twilioToken = env('TWILIO_TOKEN');
+            $twilioWhatsappFrom = env('TWILIO_FROM');
 
+            if ($twilioSid && $twilioToken && $twilioWhatsappFrom) {
+                $client = new Client($twilioSid, $twilioToken);
+
+                try {
+                    $qrPath = 'qrcodes/' . $qrFilename;
+                    Storage::disk('public')->put($qrPath, $qrResult['binary']);
+                    $qrUrl = asset('storage/' . $qrPath);
+
+                    // Format tanggal mulai & selesai event
+                    $startDate = Carbon::parse($event->start_date)->locale('id')->translatedFormat('l, d F Y H:i'); // Example: Senin, 01 Januari 2024 14:00
+                    $endDate = Carbon::parse($event->end_date)->locale('id')->translatedFormat('l, d F Y H:i'); // Example: Senin, 01 Januari 2024 16:00
+
+                    // Nama lengkap atau fallback ke "Peserta"
+                    $fullName = trim(($attendee->first_name ?: '') . ' ' . ($attendee->last_name ?: '')) ?: 'Peserta';
+
+                    // Pesan WhatsApp
+                    $body = "Halo *{$fullName}!* 🎉\n\n";
+                    $body .= "Terima kasih sudah mendaftar di *{$event->title}*.\n\n";
+                    $body .= "📅 Jadwal:\n";
+                    $body .= "   • Mulai: *{$startDate}*\n";
+                    $body .= "   • Selesai: *{$endDate}*\n\n";
+                    $body .= "📍 Lokasi: *{$event->location}*\n\n";
+                    $body .= "Silakan gunakan QR Code berikut untuk absensi event.\n\n";
+                    $body .= "_*Jangan bagikan QR ini ke orang lain.*_";
+
+                    $client->messages->create(
+                        "whatsapp:{$attendee->phone_number}",
+                        [
+                            'from' => "whatsapp:$twilioWhatsappFrom",
+                            'body' => $body,
+                            'mediaUrl' => [$qrUrl],
+                        ]
+                    );
+
+                    // Dispatch job delete dengan delay 1 menit
+                    dispatch(new DeleteQrJob($qrPath))
+                        ->delay(now()->addMinute());
+
+                } catch (Exception $e) {
+                    return response()->json([
+                        'message' => 'Failed to send WhatsApp message',
+                        'error' => $e->getMessage(),
+                        'phone_formatted' => $request->phone_number,
+                    ], 500);
+                }
+            }
+        }
+
+        // 3. Kalau gak ada email & gak ada WA → tampilkan QR di blade
+        if (empty($attendee->email) && empty($attendee->phone_number)) {
             return view('user.form_registration.thankyou', [
                 'event' => $event,
-                'showQr' => false,
-                'qrData' => null
-            ]);
-        } else {
-            // Tampilkan QR langsung di halaman
-            return view('user.form_registration.thankyou', [
-                'event' => $event,
+                'attendee' => $attendee,
                 'showQr' => true,
                 'qrData' => $qrResult['dataUri']
             ]);
         }
+
+        // Default return → thankyou page tanpa QR (karena udah dikirim via email/WA)
+        return view('user.form_registration.thankyou', [
+            'event' => $event,
+            'showQr' => false,
+            'qrData' => null
+        ]);
     }
 
     /**
      * Admin: Tampilkan form edit input registrasi (default + custom).
      */
-    public function editInputs($eventId)
+    public function editInputs(Event $event)
     {
-        $event = Event::findOrFail($eventId);
-        $defaultInputs = DefaultInputRegistrationStatus::firstOrCreate(['event_id' => $eventId]);
-        $customInputs = CustomInputRegistration::where('event_id', $eventId)->get();
+        $this->authorize('update', $event);
+
+        $defaultInputs = DefaultInputRegistrationStatus::firstOrCreate(['event_id' => $event->id]);
+        $customInputs = CustomInputRegistration::where('event_id', $event->id)->get();
 
         return view('admin.event_registration.admin_input_form', compact('event', 'defaultInputs', 'customInputs'));
     }
@@ -271,10 +388,12 @@ class EventRegistrationController extends Controller
     /**
      * Admin: Simpan pengaturan input (default + custom).
      */
-    public function updateInputs(Request $request, $eventId)
+    public function updateInputs(Request $request, Event $event)
     {
+        $this->authorize('update', $event);
+
         $default = DefaultInputRegistrationStatus::updateOrCreate(
-            ['event_id' => $eventId],
+            ['event_id' => $event->id],
             [
                 'input_document' => $request->has('input_document'),
                 'input_first_name' => $request->has('input_first_name'),
@@ -285,7 +404,7 @@ class EventRegistrationController extends Controller
         );
 
         // Ambil semua custom input lama dari DB
-        $existingCustomInputs = CustomInputRegistration::where('event_id', $eventId)->get()->keyBy('id');
+        $existingCustomInputs = CustomInputRegistration::where('event_id', $event->id)->get()->keyBy('id');
 
         // Custom input dari request
         $submittedInputs = $request->input('custom_inputs', []);
@@ -294,16 +413,27 @@ class EventRegistrationController extends Controller
         foreach ($submittedInputs as $id => $data) {
             $status = isset($data['status']) && $data['status'] == '1';
 
-            CustomInputRegistration::updateOrCreate(
-                ['id' => $id, 'event_id' => $eventId],
-                [
+            $customInput = CustomInputRegistration::find($id);
+
+            if ($customInput) {
+                // Record sudah ada → cuma update
+                $customInput->update([
                     'name' => $data['name'],
                     'type' => $data['type'],
                     'status' => $status,
-                    'created_by' => Auth::id() ?? 1,
-                    'updated_by' => Auth::id() ?? 1,
-                ]
-            );
+                    'updated_by' => Auth::id(),
+                ]);
+            } else {
+                // Record baru → set created_by & updated_by
+                CustomInputRegistration::create([
+                    'event_id' => $event->id,
+                    'name' => $data['name'],
+                    'type' => $data['type'],
+                    'status' => $status,
+                    'created_by' => Auth::id(),
+                    'updated_by' => Auth::id(),
+                ]);
+            }
 
             // Hapus dari list existing karena sudah diproses
             $existingCustomInputs->forget($id);
@@ -319,7 +449,7 @@ class EventRegistrationController extends Controller
 
         $deletedIds = array_filter(explode(',', $request->input('deleted_input_ids', '')));
         if (count($deletedIds)) {
-            CustomInputRegistration::where('event_id', $eventId)
+            CustomInputRegistration::where('event_id', $event->id)
                 ->whereIn('id', $deletedIds)
                 ->delete();
         }

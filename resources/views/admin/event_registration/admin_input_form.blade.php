@@ -40,8 +40,19 @@
                             <label class="form-label d-flex justify-content-between align-items-center">
                                 {{ $label }}
                                 <div class="form-switch switch-primary d-flex align-items-center gap-3">
+                                    @php
+                                        // Nama field yang defaultnya OFF
+                                        $offByDefault = ['dokumen'];
+                                    @endphp
                                     <input class="form-check-input" type="checkbox" name="{{ $field }}"
-                                        id="{{ $field }}" {{ $defaultInputs->$field ? 'checked' : '' }}>
+                                        id="{{ $field }}"
+                                        {{ isset($defaultInputs->$field) // Cek apakah field ada di defaultInputs
+                                            ? ($defaultInputs->$field // Cek apakah field aktif
+                                                ? 'checked'
+                                                : '')
+                                            : (!in_array($field, $offByDefault) // Cek apakah field termasuk yang defaultnya OFF
+                                                ? 'checked'
+                                                : '') }}>
                                 </div>
                             </label>
                         </div>

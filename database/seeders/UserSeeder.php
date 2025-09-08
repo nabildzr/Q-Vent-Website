@@ -12,11 +12,11 @@ class UserSeeder extends Seeder
         User::factory()->count(10)->create();
 
         User::create([
-            'name' => 'Example User',
-            'email' => 'example@gmail.com',
-            'role' => 'admin',
+            'name' => 'Super Admin Nz',
+            'email' => 'mnazrielalamsyah25@gmail.com',
+            'role' => 'super_admin',
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'phone_number' => '62812112',
+            'phone_number' => '6289509827741',
         ]);
     }
 }
