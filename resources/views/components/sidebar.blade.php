@@ -18,12 +18,14 @@
                 </a>
             </li>
 
-            <li class="">
-                <a href="{{ route('admin.user.index') }}">
-                    <iconify-icon icon="solar:shield-user-broken" class="menu-icon"></iconify-icon>
-                    <span>User</span>
-                </a>
-            </li>
+            @can('isSuperAdmin')
+                <li class="">
+                    <a href="{{ route('admin.user.index') }}">
+                        <iconify-icon icon="solar:shield-user-broken" class="menu-icon"></iconify-icon>
+                        <span>User</span>
+                    </a>
+                </li>
+            @endcan
 
             <li class="">
                 <a href="{{ route('admin.event_category.index') }}">
