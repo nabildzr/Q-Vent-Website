@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('link');
             $table->dateTime('valid_until')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

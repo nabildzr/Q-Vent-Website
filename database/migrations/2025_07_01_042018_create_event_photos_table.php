@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
             $table->text('photo');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

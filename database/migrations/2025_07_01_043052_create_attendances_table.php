@@ -22,6 +22,7 @@ return new class extends Migration
             $table->dateTime('check_in_time')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

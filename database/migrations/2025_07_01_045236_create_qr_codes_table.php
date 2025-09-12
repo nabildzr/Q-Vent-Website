@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('qrcode_data');
             $table->dateTime('valid_until');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

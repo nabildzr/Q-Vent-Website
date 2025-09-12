@@ -295,30 +295,30 @@ class EventController extends Controller
 
     public function destroy($id)
     {
-        $event = Event::with('eventPhotos')->findOrFail($id);
+        $event = Event::findOrFail($id);
 
-        $this->authorize('delete', $event);
+        // $this->authorize('delete', $event);
 
-        if ($event->banner && Storage::disk('public')->exists($event->banner)) {
-            Storage::disk('public')->delete($event->banner);
-        }
+        // if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+        //     Storage::disk('public')->delete($event->banner);
+        // }
 
-        if ($event->qr_logo && Storage::disk('public')->exists($event->qr_logo)) {
-            Storage::disk('public')->delete($event->qr_logo);
-        }
+        // if ($event->qr_logo && Storage::disk('public')->exists($event->qr_logo)) {
+        //     Storage::disk('public')->delete($event->qr_logo);
+        // }
 
-        foreach ($event->eventPhotos as $photo) {
-            if (Storage::disk('public')->exists($photo->photo)) {
-                Storage::disk('public')->delete($photo->photo);
-            }
-            $photo->delete(); // hapus dari database
-        }
+        // foreach ($event->eventPhotos as $photo) {
+        //     if (Storage::disk('public')->exists($photo->photo)) {
+        //         Storage::disk('public')->delete($photo->photo);
+        //     }
+        //     $photo->delete(); // hapus dari database
+        // }
 
-        $event->admins()->detach();
+        // $event->admins()->detach();
 
-        if ($event->registrationLink) {
-            $event->registrationLink->delete();
-        }
+        // if ($event->registrationLink) {
+        //     $event->registrationLink->delete();
+        // }
 
         $event->delete();
 

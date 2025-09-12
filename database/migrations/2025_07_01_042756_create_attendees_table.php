@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->text('code')->nullable();
             $table->text('input_document')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             // Ensure unique attendee per event based on first name, last name, email, and phone number
             $table->unique(

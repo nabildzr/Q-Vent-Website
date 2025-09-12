@@ -28,6 +28,7 @@ return new class extends Migration
             $table->text('banner');
             $table->text('qr_logo')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

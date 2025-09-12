@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('platform_url');
             $table->text('agenda');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

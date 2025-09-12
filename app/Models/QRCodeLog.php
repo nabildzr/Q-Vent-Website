@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QRCodeLog extends Model
 {
     /** @use HasFactory<\Database\Factories\QRCodeLogFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'qr_code_logs';
 
