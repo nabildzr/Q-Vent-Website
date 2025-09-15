@@ -116,7 +116,7 @@
                     {{ Auth::check() ? Auth::user()->name : 'Guest' }}
                 </h6>
                 <span class="text-secondary-light fw-medium text-sm">
-                    {{ Auth::check() ? ucfirst(Auth::user()->role) : '-' }}
+                    {{ Auth::check() ? ucwords(str_replace('_', ' ', Auth::user()->role)) : '-' }}
                 </span>
               </div>
               <button type="button" class="hover-text-danger">

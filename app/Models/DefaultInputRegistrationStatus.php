@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DefaultInputRegistrationStatus extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'default_input_registration_status';
 
     protected $fillable = [

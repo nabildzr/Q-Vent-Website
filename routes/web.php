@@ -8,6 +8,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\AttendeeController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 // ========== ROUTE UNTUK AUTHENTICATION ==========
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
@@ -27,6 +29,32 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('
 // ========== ROUTE UNTUK PESERTA ==========
 Route::get('/event/{link}', [EventRegistrationController::class, 'showForm'])->name('registration.form');
 Route::post('/event/{link}/submit', [EventRegistrationController::class, 'submit'])->name('registration.submit');
+
+// ========== ROUTE UNTUK FILE PROTECTED ==========
+Route::get('/protected/{token}', function ($token) {
+    // Cek sudah login atau belum
+    // if (!auth()->check()) {
+    //     abort(403, 'Unauthorized');
+    // }
+
+    // Cek signature (expired juga dicek otomatis)
+    if (!request()->hasValidSignature()) {
+        abort(403, 'Invalid or expired link');
+    }
+
+    // Decode token -> dapat path asli
+    try {
+        $path = decrypt($token); // decrypt dari blade
+    } catch (\Exception $e) {
+        abort(403, 'Invalid token');
+    }
+
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return response()->file(storage_path("app/public/{$path}"));
+})->name('protected.file');
 
 // ========== ROUTE UNTUK ADMIN ==========
 Route::prefix('admin')->middleware(['auth', 'can:isSuperOrAdmin'])->group(function () {

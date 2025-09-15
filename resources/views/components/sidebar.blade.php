@@ -18,12 +18,14 @@
                 </a>
             </li>
 
-            <li class="">
-                <a href="{{ route('admin.user.index') }}">
-                    <iconify-icon icon="solar:shield-user-broken" class="menu-icon"></iconify-icon>
-                    <span>User</span>
-                </a>
-            </li>
+            @can('isSuperAdmin')
+                <li class="">
+                    <a href="{{ route('admin.user.index') }}">
+                        <iconify-icon icon="solar:shield-user-broken" class="menu-icon"></iconify-icon>
+                        <span>User</span>
+                    </a>
+                </li>
+            @endcan
 
             <li class="">
                 <a href="{{ route('admin.event_category.index') }}">
@@ -46,32 +48,8 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="company.html"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i>
-                            Company</a>
-                    </li>
-                    <li>
-                        <a href="notification.html"><i class="ri-circle-fill circle-icon text-warning-main w-auto"></i>
-                            Notification</a>
-                    </li>
-                    <li>
-                        <a href="notification-alert.html"><i
-                                class="ri-circle-fill circle-icon text-info-main w-auto"></i> Notification Alert</a>
-                    </li>
-                    <li>
-                        <a href="theme.html"><i class="ri-circle-fill circle-icon text-danger-main w-auto"></i>
-                            Theme</a>
-                    </li>
-                    <li>
-                        <a href="currencies.html"><i class="ri-circle-fill circle-icon text-danger-main w-auto"></i>
-                            Currencies</a>
-                    </li>
-                    <li>
-                        <a href="language.html"><i class="ri-circle-fill circle-icon text-danger-main w-auto"></i>
-                            Languages</a>
-                    </li>
-                    <li>
-                        <a href="payment-gateway.html"><i
-                                class="ri-circle-fill circle-icon text-danger-main w-auto"></i> Payment Gateway</a>
+                        <a href="#"><iconify-icon icon="mdi:trash-can-outline" class="menu-icon text-danger-main w-auto"></iconify-icon>
+                            Trash Event</a>
                     </li>
                 </ul>
             </li>

@@ -272,7 +272,7 @@ class EventRegistrationController extends Controller
         QRCodeLog::create([
             'qr_code_id' => $qrCode->id,
             'attendee_id' => $attendee->id,
-            'user_id' => auth()->id() ?? 1,
+            'user_id' => auth()->id(),
             'status' => 'Not Scanned',
         ]);
 
