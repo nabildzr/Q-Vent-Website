@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('qr_code_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('qr_code_id')->constrained('qr_codes')->cascadeOnDelete();
-            $table->foreignId('attendee_id')->constrained('attendees')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('qr_code_id')->constrained('qr_codes')->cascadeOnDelete()->nullable();
+            $table->foreignId('attendee_id')->constrained('attendees')->cascadeOnDelete()->nullable();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->nullable();
             $table->enum('status', [
                 'Not Scanned',
                 'Scanned',

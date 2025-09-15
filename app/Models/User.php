@@ -67,19 +67,53 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    public function doneEvents() {
+    public function doneEvents()
+    {
         return $this->belongsToMany(Event::class, 'event_admins', 'user_id', 'event_id')
-            ->where('status', 'done')->orderBy('start_date', 'asc')
+            ->with('eventCategory')
+            ->where('status', 'done')
+            // ->whereDate('end_date', '<=', now())->orderBy('start_date', 'desc')
             ->withTimestamps();
     }
 
     public function ongoingEvents()
     {
         return $this->belongsToMany(Event::class, 'event_admins', 'user_id', 'event_id')
+            ->with('eventCategory')
+            ->where('status', 'active')
             ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now()) 
+            ->whereDate('end_date', '>=', now())->orderBy('start_date', 'asc')
             ->withTimestamps();
-        }
+    }
+
+    public function upcomingEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_admins', 'user_id', 'event_id')
+            ->with('eventCategory')
+            ->where('status', 'active')
+            ->whereDate('start_date', '>', now()->format('Y-m-d'))->orderBy('start_date', 'asc')
+            ->withTimestamps();
+    }
+
+    public function currentMonthEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_admins', 'user_id', 'event_id')
+            ->whereMonth('start_date', now()->month)
+            ->whereYear('start_date', now()->year)
+            ->where('status', 'active')
+            ->orderBy('start_date', 'asc')
+            ->withTimestamps();
+    }
+
+    public function eventHistory()
+    {
+        return $this->belongsToMany(Event::class, 'event_admins', 'user_id', 'event_id')
+        ->where('status', 'done')
+            ->with('eventCategory')
+            ->orderBy('end_date', 'desc')
+            // ->whereDate('end_date', '<=', now())->orderBy('start_date', 'desc')
+            ->withTimestamps();
+    }
 
     public function createdEvents()
     {
