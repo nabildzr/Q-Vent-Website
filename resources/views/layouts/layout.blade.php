@@ -3,7 +3,7 @@
 <html lang="en" data-theme="light">
   <x-head >
     <x-slot:title>
-      @yield('title', 'Dashboard')
+      @yield('title', default: 'Dashboard')
     </x-slot:title>
     <x-slot:head>
       @yield('head')
@@ -21,7 +21,7 @@
       <x-footer />
     </main>
 
-    <x-script> 
+    <x-script>
       <x-slot:beforeAppScripts>
         @yield('beforeAppScripts')
       </x-slot:beforeAppScripts>

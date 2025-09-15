@@ -1,19 +1,63 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
-
+use App\Http\Controllers\AttendeeController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+
+// ========== ROUTE UNTUK AUTHENTICATION ==========
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Forgot Password + OTP
+Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetCode'])->name('password.sendCode');
+
+Route::get('/verify-code', [AuthController::class, 'showVerifyCodeForm'])->name('password.verify.form');
+Route::post('/verify-code', [AuthController::class, 'verifyCode'])->name('password.verify');
+
+Route::get('/reset-password', [AuthController::class, 'showResetPasswordForm'])->name('password.reset.form');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
 
 // ========== ROUTE UNTUK PESERTA ==========
 Route::get('/event/{link}', [EventRegistrationController::class, 'showForm'])->name('registration.form');
 Route::post('/event/{link}/submit', [EventRegistrationController::class, 'submit'])->name('registration.submit');
 
+// ========== ROUTE UNTUK FILE PROTECTED ==========
+Route::get('/protected/{token}', function ($token) {
+    // Cek sudah login atau belum
+    // if (!auth()->check()) {
+    //     abort(403, 'Unauthorized');
+    // }
+
+    // Cek signature (expired juga dicek otomatis)
+    if (!request()->hasValidSignature()) {
+        abort(403, 'Invalid or expired link');
+    }
+
+    // Decode token -> dapat path asli
+    try {
+        $path = decrypt($token); // decrypt dari blade
+    } catch (\Exception $e) {
+        abort(403, 'Invalid token');
+    }
+
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return response()->file(storage_path("app/public/{$path}"));
+})->name('protected.file');
+
 // ========== ROUTE UNTUK ADMIN ==========
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'can:isSuperOrAdmin'])->group(function () {
     Route::resource('/', DashboardController::class)->names([
         'index' => 'admin.dashboard.index',
     ]);
@@ -25,7 +69,7 @@ Route::prefix('admin')->group(function () {
         'edit' => 'admin.user.edit',
         'update' => 'admin.user.update',
         'destroy' => 'admin.user.destroy',
-    ]);
+    ])->middleware('can:isSuperAdmin');
 
     Route::resource('/event_category', EventCategoryController::class)->names([
         'index' => 'admin.event_category.index',
@@ -54,5 +98,15 @@ Route::prefix('admin')->group(function () {
     Route::post('/event/{event}/input-registration', [EventRegistrationController::class, 'updateInputs'])
         ->name('admin.event.input.update');
 
-    // Route::get('/', [DashboardController::class, 'index']);
+    Route::get('/event/{event}/attendees', [AttendeeController::class, 'index'])
+        ->name('admin.attendee.index');
+
+    Route::resource('/attendee', AttendeeController::class)->names([
+        'create' => 'admin.attendee.create',
+        'store' => 'admin.attendee.store',
+        'show' => 'admin.attendee.show',
+        'edit' => 'admin.attendee.edit',
+        'update' => 'admin.attendee.update',
+        'destroy' => 'admin.attendee.destroy',
+    ])->except(['index']);
 });

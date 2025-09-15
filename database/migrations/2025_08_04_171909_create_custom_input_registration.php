@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('updated_by')->constrained('users')->cascadeOnDelete();
             $table->boolean('status')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

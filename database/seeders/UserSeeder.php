@@ -15,9 +15,8 @@ class UserSeeder extends Seeder
             'name' => 'Nabil Dzikrika',
             'email' => 'nabildzikrika@gmail.com',
             'role' => 'admin',
-            
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'phone_number' => '6287814037811',
+            'phone_number' => '62878999222',
         ]);
     }
 }

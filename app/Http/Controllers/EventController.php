@@ -7,17 +7,46 @@ use App\Models\Event;
 use App\Models\EventPhoto;
 use App\Models\EventRegistrationLink;
 use App\Models\User;
+use App\Models\DefaultInputRegistrationStatus;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class EventController extends Controller
 {
+    private function autoUpdateEventStatus()
+    {
+        Event::where('status', 'active')
+            ->where('end_date', '<', now())
+            ->update(['status' => 'done']);
+    }
+
+    private function autoUpdateRegistrationLinkStatus()
+    {
+        EventRegistrationLink::where('status', 'open')
+            ->where('valid_until', '<', now())
+            ->update(['status' => 'closed']);
+    }
+
     public function index()
     {
-        $events = Event::all();
-        return view('admin.event.index')->with([
-            'events' => $events
-        ]);
+        $this->autoUpdateEventStatus();
+        $this->autoUpdateRegistrationLinkStatus();
+
+        $user = auth()->user();
+
+        if ($user->role === 'super_admin') {
+            $events = Event::with(['registrationLink', 'createdBy', 'eventCategory'])->get();
+        } else {
+            $events = Event::with(['registrationLink', 'createdBy', 'eventCategory'])
+                ->where('created_by', $user->id)
+                ->orWhereHas('admins', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })
+                ->get();
+        }
+
+        return view('admin.event.index', compact('events'));
     }
 
     public function create()
@@ -39,9 +68,8 @@ class EventController extends Controller
             'description' => 'required|max:255',
             'location' => 'required',
             'event_category_id' => 'required|exists:event_categories,id',
-            'created_by' => 'required|exists:users,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d\TH:i',
+            'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
             'banner' => 'nullable|image|max:2048',
             'qr_logo' => 'nullable|image|max:2048',
             'admins' => 'nullable|array',
@@ -65,14 +93,15 @@ class EventController extends Controller
             'description' => $request->description,
             'location' => $request->location,
             'event_category_id' => $request->event_category_id,
-            'created_by' => $request->created_by,
+            'created_by' => auth()->id(),
             'status' => 'active',
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'banner' => $bannerPath,
-            'qr_logo' => $qrLogoPath,
+            'qr_logo' => $qrLogoPath ?? null,
         ]);
 
+        // Buat link pendaftaran event
         $link = preg_replace('/[^a-z0-9]+/', '-', strtolower($request->title));
         $link = trim($link, '-');
 
@@ -83,11 +112,26 @@ class EventController extends Controller
             $link = $baseLink . '-' . $counter++;
         }
 
+        // Validasi tanggal valid_until
+        $validUntil = Carbon::parse($event->start_date)->subDay()->endOfDay();
+        if ($validUntil->isPast()) {
+            $validUntil = now()->endOfDay(); // fallback biar ga langsung expired
+        }
+
         EventRegistrationLink::create([
             'event_id' => $event->id,
-            'status_id' => 'open',
+            'status' => 'open',
             'link' => $link,
-            'valid_until' => now()->addDays(30),
+            'valid_until' => $validUntil,
+        ]);
+
+        DefaultInputRegistrationStatus::create([
+            'event_id' => $event->id,
+            'input_first_name' => true,
+            'input_last_name' => true,
+            'input_email' => true,
+            'input_phone_number' => true,
+            'input_document' => false,
         ]);
 
         // Simpan admin pendamping (jika ada)
@@ -108,6 +152,10 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
+        $this->authorize('view', $event);
+
+        $this->autoUpdateEventStatus();
+
         $allLinks = EventRegistrationLink::where('id', '!=', optional($event->registrationLink)->id)
             ->pluck('link')
             ->toArray();
@@ -115,14 +163,14 @@ class EventController extends Controller
         return view('admin.event.show', compact('event', 'allLinks'));
     }
 
-    public function edit($id)
+    public function edit(Event $event)
     {
-        $event = Event::findOrFail($id);
+        $this->authorize('update', $event);
 
         $existingLinks = EventRegistrationLink::pluck('link')->toArray();
         return view('admin.event.form', [
-            'event' => $event, // kalo edit, kita ambil data event yang ada
-            'isEdit' => true, // menandakan ini adalah form untuk mengedit event yang sudah ada
+            'event' => $event,
+            'isEdit' => true,
             'users' => User::all(),
             'existingLinks' => $existingLinks,
         ]);
@@ -132,15 +180,16 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($id);
 
+        $this->authorize('update', $event);
+
         $request->validate([
             'title' => 'required',
             'description' => 'required|max:255',
             'location' => 'required',
             'event_category_id' => 'required|exists:event_categories,id',
-            'created_by' => 'required|exists:users,id',
             'status' => 'required|in:active,done,cancelled',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d\TH:i',
+            'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
             'banner' => 'nullable|image|max:2048',
             'qr_logo' => 'nullable|image|max:2048',
             'admins' => 'nullable|array',
@@ -182,7 +231,7 @@ class EventController extends Controller
             'description' => $request->description,
             'location' => $request->location,
             'event_category_id' => $request->event_category_id,
-            'created_by' => $request->created_by,
+            // 'updated_by' => auth()->id(),
             'status' => $request->status,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
@@ -214,26 +263,41 @@ class EventController extends Controller
             }
         }
 
+        // Kalau event punya registration link
+        if ($event->registrationLink) {
+            // Kalau admin tidak isi manual di modal, set default ke H-1 start_date
+            if (!$request->has('valid_until') || empty($request->valid_until)) {
+                $event->registrationLink->update([
+                    'valid_until' => Carbon::parse($event->start_date)->subDay()->endOfDay(),
+                ]);
+            }
+        }
+
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }
-
-    public function updateRegistrationLink(Request $request, $id)
+    public function updateRegistrationLink(Request $request, EventRegistrationLink $link)
     {
+        $this->authorize('update', $link->event); // cek lewat event
+
         $request->validate([
             'link' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('event_registration_links', 'link')->ignore($id),
+                Rule::unique('event_registration_links', 'link')->ignore($link->id),
             ],
             'valid_until' => 'required|date',
         ]);
 
-        $link = EventRegistrationLink::findOrFail($id);
+        $link = EventRegistrationLink::findOrFail($link->id);
+
+        $validUntil = Carbon::parse($request->valid_until);
+        $status = $validUntil->isPast() ? 'closed' : 'open';
 
         $link->update([
             'link' => $request->link,
             'valid_until' => $request->valid_until,
+            'status' => $status,
         ]);
 
         return redirect()->back()->with('success', 'Registration link berhasil diperbarui.');
@@ -241,28 +305,30 @@ class EventController extends Controller
 
     public function destroy($id)
     {
-        $event = Event::with('eventPhotos')->findOrFail($id);
+        $event = Event::findOrFail($id);
 
-        if ($event->banner && Storage::disk('public')->exists($event->banner)) {
-            Storage::disk('public')->delete($event->banner);
-        }
+        // $this->authorize('delete', $event);
 
-        if ($event->qr_logo && Storage::disk('public')->exists($event->qr_logo)) {
-            Storage::disk('public')->delete($event->qr_logo);
-        }
+        // if ($event->banner && Storage::disk('public')->exists($event->banner)) {
+        //     Storage::disk('public')->delete($event->banner);
+        // }
 
-        foreach ($event->eventPhotos as $photo) {
-            if (Storage::disk('public')->exists($photo->photo)) {
-                Storage::disk('public')->delete($photo->photo);
-            }
-            $photo->delete(); // hapus dari database
-        }
+        // if ($event->qr_logo && Storage::disk('public')->exists($event->qr_logo)) {
+        //     Storage::disk('public')->delete($event->qr_logo);
+        // }
 
-        $event->admins()->detach();
+        // foreach ($event->eventPhotos as $photo) {
+        //     if (Storage::disk('public')->exists($photo->photo)) {
+        //         Storage::disk('public')->delete($photo->photo);
+        //     }
+        //     $photo->delete(); // hapus dari database
+        // }
 
-        if ($event->registrationLink) {
-            $event->registrationLink->delete();
-        }
+        // $event->admins()->detach();
+
+        // if ($event->registrationLink) {
+        //     $event->registrationLink->delete();
+        // }
 
         $event->delete();
 

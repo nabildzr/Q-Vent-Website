@@ -40,8 +40,21 @@
                             <label class="form-label d-flex justify-content-between align-items-center">
                                 {{ $label }}
                                 <div class="form-switch switch-primary d-flex align-items-center gap-3">
-                                    <input class="form-check-input" type="checkbox" name="{{ $field }}"
-                                        id="{{ $field }}" {{ $defaultInputs->$field ? 'checked' : '' }}>
+                                    @if ($field === 'input_first_name')
+                                        <input class="form-check-input" type="checkbox" name="{{ $field }}"
+                                            id="{{ $field }}" checked disabled>
+                                        <input type="hidden" name="{{ $field }}" value="1">
+                                    @else
+                                        <input class="form-check-input" type="checkbox" name="{{ $field }}"
+                                            id="{{ $field }}"
+                                            {{ isset($defaultInputs->$field)
+                                                ? ($defaultInputs->$field
+                                                    ? 'checked'
+                                                    : '')
+                                                : (!in_array($field, $offByDefault)
+                                                    ? 'checked'
+                                                    : '') }}>
+                                    @endif
                                 </div>
                             </label>
                         </div>

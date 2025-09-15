@@ -62,9 +62,10 @@
                         {{-- Tanggal Mulai --}}
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Mulai</label>
-                            <input type="datetime-local" name="start_date"
-                                value="{{ old('start_date', optional($event->start_date)->format('Y-m-d')) }}"
-                                class="form-control" required>
+                            <input type="text" id="start_date" name="start_date"
+                                value="{{ old('start_date', optional($event->start_date)->format('Y-m-d H:i')) }}"
+                                class="form-control flatpickr-datetime"
+                                placeholder="Pilih Tanggal dan Waktu untuk memulai event" required>
                             @error('start_date')
                                 <div style="color:red">{{ $message }}</div>
                             @enderror
@@ -73,9 +74,10 @@
                         {{-- Tanggal Selesai --}}
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Selesai</label>
-                            <input type="datetime-local" name="end_date"
-                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d')) }}"
-                                class="form-control" required>
+                            <input type="text" id="end_date" name="end_date"
+                                value="{{ old('end_date', optional($event->end_date)->format('Y-m-d H:i')) }}"
+                                class="form-control flatpickr-datetime"
+                                placeholder="Pilih Tanggal dan Waktu untuk mengakhiri event" required>
                             @error('end_date')
                                 <div style="color:red">{{ $message }}</div>
                             @enderror
@@ -114,21 +116,11 @@
                         @endif
 
                         {{-- Admin --}}
+                        {{-- <input type="hidden" name="created_by" value="{{ auth()->user()->id }}">
                         <div class="col-md-6">
                             <label class="form-label">Administrator Event</label>
-                            <select name="created_by" class="form-select" required>
-                                <option value="">Pilih Administrator Event</option>
-                                @foreach (\App\Models\User::all() as $user)
-                                    <option value="{{ $user->id }}"
-                                        {{ old('created_by', $event->created_by) == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('created_by')
-                                <div style="color:red">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <input type="text" class="form-control" value="{{ auth()->user()->name }}" disabled>
+                        </div> --}}
 
                         {{-- Banner Upload --}}
                         <div class="upload-image-wrapper d-flex align-items-center gap-4">
@@ -136,7 +128,7 @@
                                 class="uploaded-img {{ $event->banner ? '' : 'd-none' }} position-relative h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-neutral-50">
                                 <button type="button"
                                     class="uploaded-img__remove position-absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-8 d-flex">
-                                    <iconify-icon icon="radix-icons:cross-2" class="text-xl text-danger-600"></iconify-icon>
+                                    {{-- <iconify-icon icon="radix-icons:cross-2" class="text-xl text-danger-600"></iconify-icon> --}}
                                 </button>
                                 <img id="uploaded-img__preview" class="w-100 h-100 object-fit-cover"
                                     src="{{ $event->banner ? asset('storage/' . $event->banner) : '#' }}" alt="image">
@@ -161,7 +153,8 @@
                                 <button type="button"
                                     class="uploaded-img__remove position-absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-8 d-flex"
                                     onclick="removeQrLogo(this)">
-                                    <iconify-icon icon="radix-icons:cross-2" class="text-xl text-danger-600"></iconify-icon>
+                                    <iconify-icon icon="radix-icons:cross-2"
+                                        class="text-xl text-danger-600"></iconify-icon>
                                 </button>
                                 <img id="qr-logo-preview" class="w-100 h-100 object-fit-cover"
                                     src="{{ $isEdit && $event->qr_logo ? asset('storage/' . $event->qr_logo) : '#' }}"
@@ -193,18 +186,14 @@
                             <label class="form-label mb-2">Administrator</label>
                             <div class="border p-3 rounded bg-light">
                                 <div class="row g-2">
-                                    @foreach ($users as $user)
-                                        <div class="col-md-4">
-                                            <div class="form-check d-flex align-items-center gap-2">
-                                                <input class="form-check-input mt-0" type="checkbox" name="admins[]"
-                                                    value="{{ $user->id }}" id="adminCheck{{ $user->id }}"
-                                                    {{ in_array($user->id, old('admins', $event->admins->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
-                                                <label class="form-check-label mb-0" for="adminCheck{{ $user->id }}">
-                                                    {{ $user->name }}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    @endforeach
+                                    <select id="admins" name="admins[]" multiple>
+                                        @foreach ($users as $user)
+                                            <option value="{{ $user->id }}"
+                                                {{ in_array($user->id, old('admins', $event->admins->pluck('id')->toArray() ?? [])) ? 'selected' : '' }}>
+                                                {{ $user->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                             @error('admins')
@@ -258,7 +247,34 @@
 @endsection
 
 @section('beforeAppScripts')
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Optional: Tema dark/material -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <!-- Tom Select CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
+
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+    <!-- Tom Select CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
     <script>
+        flatpickr(".flatpickr-datetime", {
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+            time_24hr: true,
+            locale: "id"
+        });
+
+        new TomSelect("#admins", {
+            plugins: ['remove_button'],
+            persist: false,
+            create: false,
+            placeholder: "Pilih administrator",
+        });
+
         // Preview banner
         const fileInput = document.getElementById("upload-file");
         const imagePreview = document.getElementById("uploaded-img__preview");

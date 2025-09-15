@@ -18,41 +18,44 @@
                     Tambah Kategori</a>
             </div>
             <div class="card-body">
-                <table class="table bordered-table mb-0" id="dataTable" data-page-length='10'>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama Kategori</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($categories as $category)
+                <div style="overflow-x: auto;">
+                    <table class="table bordered-table mb-0" id="dataTable" data-page-length='10'>
+                        <thead>
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $category->name }}</td>
-                                <td>
-                                    <a href="{{ route('admin.event_category.edit', $category->id) }}"
-                                        class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center">
-                                        <iconify-icon icon="lucide:edit"></iconify-icon>
-                                    </a>
-                                    <a href="#" class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
-                                        <button type="submit" class="inline-block" data-bs-toggle="modal"
-                                            data-bs-target="#deleteModal-{{ $category->id }}">
-                                            <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
-                                        </button>
-                                    </a>
-                                </td>
+                                <th>No</th>
+                                <th>Nama Kategori</th>
+                                <th>Aksi</th>
                             </tr>
-                        @endforeach
+                        </thead>
+                        <tbody>
+                            @foreach ($categories as $category)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $category->name }}</td>
+                                    <td>
+                                        <a href="{{ route('admin.event_category.edit', $category->id) }}"
+                                            class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center">
+                                            <iconify-icon icon="lucide:edit"></iconify-icon>
+                                        </a>
+                                        <a href="#"
+                                            class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
+                                            <button type="submit" class="inline-block" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal-{{ $category->id }}">
+                                                <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
+                                            </button>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
 
-                        @if ($categories->isEmpty())
-                            <tr>
-                                <td colspan="3">Belum ada kategori event.</td>
-                            </tr>
-                        @endif
-                    </tbody>
-                </table>
+                            @if ($categories->isEmpty())
+                                <tr>
+                                    <td colspan="3">Belum ada kategori event.</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

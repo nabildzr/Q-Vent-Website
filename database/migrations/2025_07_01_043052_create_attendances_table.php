@@ -19,9 +19,10 @@ return new class extends Migration
             $table->enum('status', [
                 'present', 'absent', 'late'
             ]);
-            $table->dateTime('check_in_time');
+            $table->dateTime('check_in_time')->nullable();
             $table->text('notes')->nullable();
-            $table->timestamps();   
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

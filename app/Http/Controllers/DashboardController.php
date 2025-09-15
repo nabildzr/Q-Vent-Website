@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Event;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
@@ -11,54 +14,51 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('admin.dashboard.index');
-    }
+        $user = auth()->user();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+        // Filter event sesuai role
+        if (Gate::allows('isSuperAdmin')) {
+            $events = Event::with('createdBy')->get();
+        } else {
+            $events = Event::with('createdBy')
+                ->where('created_by', $user->id)
+                ->orWhereHas('admins', fn($q) => $q->where('users.id', $user->id))
+                ->get();
+        }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        // Pisahkan event berdasarkan waktu/status
+        $now = Carbon::now();
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        $eventUpcoming = $events->filter(fn($e) => Carbon::parse($e->start_date)->isFuture());
+        $eventOngoing = $events->filter(fn($e) =>
+            Carbon::parse($e->start_date)->lte($now) && Carbon::parse($e->end_date)->gte($now)
+        );
+        $eventPast = $events->filter(fn($e) => Carbon::parse($e->end_date)->lt($now));
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        // Count sesuai kebutuhan
+        $countEventDone = $events->where('status', 'done')->count();
+        $countEventActive = $events->where('status', 'active')->count();
+        $countEventOngoing = $eventOngoing->count();
+        $countAllEvent = $events->count();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+        // Untuk super_admin: data admin terbaru
+        $latestAdmins = [];
+        $countAdmins = 0;
+        if (Gate::allows('isSuperAdmin')) {
+            $latestAdmins = User::where('role', 'admin')->latest()->take(5)->get();
+            $countAdmins = User::where('role', 'admin')->count();
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return view('admin.dashboard.index', compact(
+            'eventUpcoming',
+            'eventOngoing',
+            'eventPast',
+            'countEventDone',
+            'countEventActive',
+            'countEventOngoing',
+            'countAllEvent',
+            'latestAdmins',
+            'countAdmins'
+        ));
     }
 }

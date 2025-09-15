@@ -17,10 +17,12 @@ return new class extends Migration
             $table->foreignId('attendee_id')->constrained('attendees')->cascadeOnDelete()->nullable();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->nullable();
             $table->enum('status', [
-                'scanned',
-                'invalid'
+                'Not Scanned',
+                'Scanned',
+                'Invalid'
             ]);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

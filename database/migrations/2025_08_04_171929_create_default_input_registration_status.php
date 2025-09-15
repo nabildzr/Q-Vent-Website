@@ -20,6 +20,7 @@ return new class extends Migration
             $table->boolean('input_email')->default(true);
             $table->boolean('input_phone_number')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
