@@ -65,7 +65,7 @@
                                      @elseif ($event->status === 'cancelled') bg-danger-focus text-danger-600
                                      @else bg-secondary text-secondary-600 @endif
                                      px-16 py-6 rounded-pill fw-semibold text-xs">
-                                {{ ucfirst($event->status) }}
+                                {{ ucfirst($event->status) }}l
                             </span>
                         </p>
                     </div>

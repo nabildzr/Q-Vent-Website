@@ -21,7 +21,7 @@ return new class extends Migration
             ]);
             $table->dateTime('check_in_time');
             $table->text('notes')->nullable();
-            $table->timestamps();
+            $table->timestamps();   
         });
     }
 

@@ -8,10 +8,11 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Twilio\Rest\Client;
 
-class AuthenticationController extends Controller
+class ApiAuthenticationController extends Controller
 {
     public function signIn(Request $request)
     {
@@ -106,6 +107,7 @@ class AuthenticationController extends Controller
                 return response()->json([
                     'message' => 'Verification code sent to your WhatsApp successfully',
                     'method' => 'whatsapp',
+                    'code_for_debug' => $otp,
                     'destination' => $request->phone_number,
                     'message_sid' => $message->sid
                 ], 200);
@@ -166,4 +168,49 @@ class AuthenticationController extends Controller
         ], 200);
     }
 
+    public function recoveryPassword(Request $request)
+    {
+        $request->validate([
+            'isWithEmail' => 'required|boolean',
+            'email' => 'required_if:isWithEmail,true|email',
+            'phone_number' => 'required_if:isWithEmail,false|string',
+            'new_password' => 'required|min:6|confirmed',
+        ]);
+
+
+
+        $user = User::where($request->isWithEmail ? 'email' : 'phone_number', $request->isWithEmail ? $request->email : $request->phone_number)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json(['message' => 'Password updated successfully'], 200);
+    }
+
+
+    public function refreshToken(Request $request)
+    {
+        // get the current user from the token
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // revoke the current token
+        $request->user()->currentAccessToken()->delete();
+
+        // create a new token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Token refreshed successfully',
+            'token' => $token,
+            'expires_at' => now()->addMinutes(config('sanctum.expiration', 60)),
+        ], 200);
+    }
 }

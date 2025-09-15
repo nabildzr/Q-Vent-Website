@@ -29,9 +29,24 @@ class Event extends Model
         'start_date' => 'datetime',
     ];
 
+
     public function attendees()
     {
         return $this->hasMany(Attendee::class);
+    }
+
+    public function countAbsentAttendees()
+    {
+        return $this->attendance()
+            ->where('status', 'absent')
+            ->count();
+    }
+
+    public function countPresentOrLateAttendees()
+    {
+        return $this->attendance()
+            ->whereIn('status', ['present', 'late'])
+            ->count();
     }
 
     public function attendance()
@@ -68,6 +83,7 @@ class Event extends Model
     {
         return $this->belongsTo(EventCategory::class, 'event_category_id');
     }
+
     public function customInputs()
     {
         return $this->hasMany(CustomInputRegistration::class);
