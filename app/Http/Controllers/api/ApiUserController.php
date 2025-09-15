@@ -95,7 +95,7 @@ class ApiUserController extends Controller
 
             if (Hash::check($request->new_password, $user->password)) {
                 DB::rollBack();
-                return response()->json(['error' => 'Ne w password cannot be the same as the current password'], 400);
+                return response()->json(['error' => 'New password cannot be the same as the current password'], 400);
             }
 
             if ($request->new_password !== $request->new_password_confirmation) {
