@@ -279,6 +279,7 @@
                             <input type="text" name="valid_until" class="form-control flatpickr-datetime"
                                 id="valid_until"
                                 value="{{ optional($event->registrationLink->valid_until)->format('Y-m-d H:i') }}"
+                                placeholder="Pilih Tanggal dan Waktu untuk kadaluarsa link"
                                 required>
                         </div>
                     </div>

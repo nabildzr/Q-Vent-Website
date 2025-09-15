@@ -110,7 +110,7 @@
 
         {{-- Table --}}
         <div class="row gy-4 mt-1">
-            <div class="col-xxl-8 col-xl-12">
+            <div class="col-xxl-7 col-xl-12">
                 <div class="card h-100">
                     <div class="card-body p-24">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -141,8 +141,8 @@
                                             @forelse($eventUpcoming as $event)
                                                 <tr>
                                                     <td>{{ $event->title }}</td>
-                                                    <td>{{ $event->start_date }}</td>
-                                                    <td>{{ $event->end_date }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($event->start_date)->format('d F Y H:i') }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($event->end_date)->format('d F Y H:i') }}</td>
                                                 </tr>
                                             @empty
                                                 <tr>
@@ -167,8 +167,8 @@
                                             @forelse($eventOngoing as $event)
                                                 <tr>
                                                     <td>{{ $event->title }}</td>
-                                                    <td>{{ $event->start_date }}</td>
-                                                    <td>{{ $event->end_date }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($event->start_date)->format('d F Y H:i') }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($event->end_date)->format('d F Y H:i') }}</td>
                                                 </tr>
                                             @empty
                                                 <tr>
@@ -193,8 +193,8 @@
                                             @forelse($eventPast as $event)
                                                 <tr>
                                                     <td>{{ $event->title }}</td>
-                                                    <td>{{ $event->start_date }}</td>
-                                                    <td>{{ $event->end_date }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($event->start_date)->format('d F Y H:i') }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($event->end_date)->format('d F Y H:i') }}</td>
                                                 </tr>
                                             @empty
                                                 <tr>
@@ -212,7 +212,7 @@
 
             {{-- Right side card --}}
             @can('isSuperAdmin')
-                <div class="col-xxl-4 col-xl-12">
+                <div class="col-xxl-5 col-xl-12">
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center flex-wrap gap-2 justify-content-between">

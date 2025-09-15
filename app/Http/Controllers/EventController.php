@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\EventPhoto;
 use App\Models\EventRegistrationLink;
 use App\Models\User;
+use App\Models\DefaultInputRegistrationStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -124,6 +125,15 @@ class EventController extends Controller
             'valid_until' => $validUntil,
         ]);
 
+        DefaultInputRegistrationStatus::create([
+            'event_id' => $event->id,
+            'input_first_name' => true,
+            'input_last_name' => true,
+            'input_email' => true,
+            'input_phone_number' => true,
+            'input_document' => false,
+        ]);
+
         // Simpan admin pendamping (jika ada)
         if ($request->has('admins')) {
             $event->admins()->sync($request->admins); // event_admins pivot
@@ -221,7 +231,7 @@ class EventController extends Controller
             'description' => $request->description,
             'location' => $request->location,
             'event_category_id' => $request->event_category_id,
-            'created_by' => auth()->id(),
+            // 'updated_by' => auth()->id(),
             'status' => $request->status,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
