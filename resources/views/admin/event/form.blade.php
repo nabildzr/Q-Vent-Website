@@ -153,8 +153,7 @@
                                 <button type="button"
                                     class="uploaded-img__remove position-absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-8 d-flex"
                                     onclick="removeQrLogo(this)">
-                                    <iconify-icon icon="radix-icons:cross-2"
-                                        class="text-xl text-danger-600"></iconify-icon>
+                                    <iconify-icon icon="radix-icons:cross-2" class="text-xl text-danger-600"></iconify-icon>
                                 </button>
                                 <img id="qr-logo-preview" class="w-100 h-100 object-fit-cover"
                                     src="{{ $isEdit && $event->qr_logo ? asset('storage/' . $event->qr_logo) : '#' }}"
@@ -250,7 +249,7 @@
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <!-- Optional: Tema dark/material -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <!-- Tom Select CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
 

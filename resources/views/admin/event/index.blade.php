@@ -82,7 +82,7 @@
                                         {{-- Tombol hapus hanya untuk user yang boleh delete --}}
                                         @can('delete', $event)
                                             <form action="{{ route('admin.event.destroy', $event->id) }}" method="POST"
-                                                onsubmit="return confirm('Yakin ingin menghapus event ini?')" class="d-inline">
+                                                class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"

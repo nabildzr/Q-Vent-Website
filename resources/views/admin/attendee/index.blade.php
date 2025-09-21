@@ -73,10 +73,9 @@
 
                                         {{-- hanya boleh delete kalau boleh delete event --}}
                                         @can('delete', $event)
-                                            @if ($event->status === 'done')
+                                            @if ($event->status === 'done' || $event->status === 'cancelled' || auth()->user()->role==='super_admin')
                                                 <form action="{{ route('admin.attendee.destroy', $attendee->id) }}"
                                                     method="POST"
-                                                    onsubmit="return confirm('Yakin ingin menghapus attendee ini?')"
                                                     class="d-inline">
                                                     @csrf
                                                     @method('DELETE')

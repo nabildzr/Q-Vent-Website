@@ -275,9 +275,11 @@ class EventController extends Controller
 
         return redirect()->route('admin.event.index')->with('success', 'Event berhasil diperbarui.');
     }
-    public function updateRegistrationLink(Request $request, EventRegistrationLink $link)
+    public function updateRegistrationLink(Request $request, $id)
     {
-        $this->authorize('update', $link->event); // cek lewat event
+        $link = EventRegistrationLink::where('id', $id)->firstOrFail();
+
+        $this->authorize('update',$link);
 
         $request->validate([
             'link' => [

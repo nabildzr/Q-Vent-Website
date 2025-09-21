@@ -88,6 +88,11 @@
                                     </option>
                                     <option value="file" {{ $input->type == 'file' ? 'selected' : '' }}>File Upload
                                     </option>
+                                    <option value="select" {{ $input->type == 'select' ? 'selected' : '' }}>Select (Satu
+                                        Pilihan)</option>
+                                    <option value="select_multiple"
+                                        {{ $input->type == 'select_multiple' ? 'selected' : '' }}>Select (Banyak Pilihan)
+                                    </option>
                                 </select>
                             </div>
 
@@ -105,6 +110,15 @@
                                     </button>
                                 </div>
                             </div>
+
+                            @if ($input->type == 'select' || $input->type == 'select_multiple')
+                                <div class="col-md-12 mt-13">
+                                    <input type="text" name="custom_inputs[{{ $input->id }}][options]"
+                                        value="{{ $input->options }}" class="form-control"
+                                        placeholder="Pisahkan opsi dengan koma, contoh: Pria, Wanita, Lainnya">
+                                </div>
+                            @endif
+
                         </div>
                     @endforeach
                 </div>
@@ -119,30 +133,106 @@
     </div>
 @endsection
 
-@section('beforeAppScripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Modal Konfirmasi Simpan -->
+<div class="modal fade" id="saveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content radius-16 bg-base">
+            <div class="modal-header">
+                <h5 class="modal-title">Simpan Perubahan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menyimpan perubahan input registrasi?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button id="confirmSave" class="btn btn-success">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Modal Konfirmasi Hapus Input -->
+<div class="modal fade" id="deleteInputModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content radius-16 bg-base">
+            <div class="modal-header">
+                <h5 class="modal-title">Hapus Input</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteInputMessage">Apakah Anda yakin ingin menghapus input ini?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button id="confirmDeleteInput" class="btn btn-danger">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Clear All -->
+<div class="modal fade" id="clearAllModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content radius-16 bg-base">
+            <div class="modal-header">
+                <h5 class="modal-title">Hapus Semua Input</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus semua input?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button id="confirmClearAll" class="btn btn-danger">Hapus Semua</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Reset -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content radius-16 bg-base">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset Input</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin mereset input ke kondisi awal?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button id="confirmReset" class="btn btn-primary">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section('beforeAppScripts')
     <script>
-        let customInputIndex = 999;
         let deletedInputIds = [];
-        let originalHTML = ''; // untuk reset
+        let targetRowToDelete = null;
+        let originalHTML = '';
+        let customInputIndex = 999;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Simpan kondisi awal untuk reset
             const container = document.getElementById('custom-input-container');
             originalHTML = container.innerHTML;
+
+            // intercept submit form
+            document.getElementById('input-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                new bootstrap.Modal(document.getElementById('saveModal')).show();
+            });
         });
 
-        @if (session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil',
-                text: '{{ session('success') }}',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        @endif
+        // Konfirmasi simpan
+        document.getElementById('confirmSave').addEventListener('click', function() {
+            document.getElementById('input-form').submit();
+        });
 
+        // Tambah custom input baru
         function addCustomInput() {
             const container = document.getElementById('custom-input-container');
             const group = document.createElement('div');
@@ -152,12 +242,14 @@
                 <input type="text" name="custom_inputs[new_${customInputIndex}][name]" class="form-control" placeholder="Nama Input">
             </div>
             <div class="col-md-3">
-                <select name="custom_inputs[new_${customInputIndex}][type]" class="form-select">
+                <select name="custom_inputs[new_${customInputIndex}][type]" class="form-select" onchange="toggleOptionsField(this, ${customInputIndex})">
                     <option value="text">Text</option>
                     <option value="number">Number</option>
                     <option value="date">Date</option>
                     <option value="textarea">Textarea</option>
                     <option value="file">File Upload</option>
+                    <option value="select">Select (Satu Pilihan)</option>
+                    <option value="select_multiple">Select (Banyak Pilihan)</option>
                 </select>
             </div>
             <div class="col-md-3 mt-6">
@@ -172,107 +264,76 @@
                     </button>
                 </div>
             </div>
+            <div class="col-md-12 mt-2 d-none" id="options-field-${customInputIndex}">
+                <input type="text" 
+                    name="custom_inputs[new_${customInputIndex}][options]" 
+                    class="form-control"
+                    placeholder="Pisahkan opsi dengan koma, contoh: Pria, Wanita, Lainnya">
+            </div>
         `;
             container.appendChild(group);
             customInputIndex++;
         }
 
-        function removeInputRow(button) {
-            Swal.fire({
-                text: 'Yakin ingin menghapus input ini?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, hapus',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const row = button.closest('.custom-input-group');
-                    const nameAttr = row.querySelector('input, select')?.getAttribute('name');
-                    const match = nameAttr?.match(/\[([^\]]+)\]/);
-
-                    if (match) {
-                        const rawId = match[1];
-                        if (!isNaN(rawId)) {
-                            deletedInputIds.push(rawId);
-                            updateDeletedIdsInput();
-                        }
-                    }
-
-                    row.remove();
-                }
-            });
+        function toggleOptionsField(select, index) {
+            const field = document.getElementById(`options-field-${index}`);
+            if (select.value === 'select' || select.value === 'select_multiple') {
+                field.classList.remove('d-none');
+            } else {
+                field.classList.add('d-none');
+            }
         }
+
+        function removeInputRow(button) {
+            targetRowToDelete = button.closest('.custom-input-group');
+            new bootstrap.Modal(document.getElementById('deleteInputModal')).show();
+        }
+
+        document.getElementById('confirmDeleteInput').addEventListener('click', function() {
+            if (targetRowToDelete) {
+                const nameAttr = targetRowToDelete.querySelector('input, select')?.getAttribute('name');
+                const match = nameAttr?.match(/\[([^\]]+)\]/);
+
+                if (match) {
+                    const rawId = match[1];
+                    if (!isNaN(rawId)) {
+                        deletedInputIds.push(rawId);
+                        updateDeletedIdsInput();
+                    }
+                }
+                targetRowToDelete.remove();
+            }
+            bootstrap.Modal.getInstance(document.getElementById('deleteInputModal')).hide();
+        });
 
         function clearAllInputs() {
-            Swal.fire({
-                text: 'Yakin ingin menghapus SEMUA input?',
-                text: 'Tindakan ini tidak dapat dibatalkan!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, hapus semua',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const container = document.getElementById('custom-input-container');
-                    const inputs = container.querySelectorAll('.custom-input-group');
-
-                    inputs.forEach(row => {
-                        const nameAttr = row.querySelector('input, select')?.getAttribute('name');
-                        const match = nameAttr?.match(/\[([^\]]+)\]/);
-                        if (match) {
-                            const rawId = match[1];
-                            if (!isNaN(rawId)) {
-                                deletedInputIds.push(rawId);
-                            }
-                        }
-                        row.remove();
-                    });
-
-                    updateDeletedIdsInput();
-
-                    Swal.fire('Berhasil!', 'Semua input berhasil dihapus.', 'success');
-                }
-            });
+            new bootstrap.Modal(document.getElementById('clearAllModal')).show();
         }
 
+        document.getElementById('confirmClearAll').addEventListener('click', function() {
+            const container = document.getElementById('custom-input-container');
+            container.querySelectorAll('.custom-input-group').forEach(row => row.remove());
+            deletedInputIds = [];
+            updateDeletedIdsInput();
+            bootstrap.Modal.getInstance(document.getElementById('clearAllModal')).hide();
+        });
+
+        // Reset input ke kondisi awal
         function resetInputs() {
-            Swal.fire({
-                text: 'Yakin ingin mereset input ke kondisi awal?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, reset',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const container = document.getElementById('custom-input-container');
-                    container.innerHTML = originalHTML;
-                    deletedInputIds = [];
-                    updateDeletedIdsInput();
-
-                    Swal.fire('Berhasil!', 'Input berhasil direset.', 'success');
-                }
-            });
+            new bootstrap.Modal(document.getElementById('resetModal')).show();
         }
 
+        document.getElementById('confirmReset').addEventListener('click', function() {
+            const container = document.getElementById('custom-input-container');
+            container.innerHTML = originalHTML;
+            deletedInputIds = [];
+            updateDeletedIdsInput();
+            bootstrap.Modal.getInstance(document.getElementById('resetModal')).hide();
+        });
+
+        // Update hidden input deleted ids
         function updateDeletedIdsInput() {
             document.getElementById('deleted_input_ids').value = deletedInputIds.join(',');
         }
-
-        document.getElementById('input-form').addEventListener('submit', function(e) {
-            e.preventDefault(); // blokir submit dulu
-
-            Swal.fire({
-                title: 'Simpan?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Simpan',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    e.target.submit();
-                }
-            });
-        });
     </script>
-
 @endsection

@@ -46,7 +46,6 @@
                                                 class="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"><iconify-icon
                                                     icon="lucide:edit"></iconify-icon></a>
                                             <form action="{{ route('admin.user.destroy', $user->id) }}" method="POST"
-                                                onsubmit="return confirm('Yakin ingin menghapus user ini?')"
                                                 class="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center">
                                                 @csrf
                                                 @method('DELETE')
