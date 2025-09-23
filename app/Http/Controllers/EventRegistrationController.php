@@ -246,7 +246,7 @@ class EventRegistrationController extends Controller
         Attendance::create([
             'attendee_id' => $attendee->id,
             'event_id' => $event->id,
-            'status' => 'present',
+            'status' => 'absent',
             'check_in_time' => null,
             'notes' => null,
         ]);
@@ -343,7 +343,6 @@ class EventRegistrationController extends Controller
                     // Dispatch job delete dengan delay 1 menit
                     dispatch(new DeleteQrJob($qrPath))
                         ->delay(now()->addMinute());
-
                 } catch (Exception $e) {
                     return response()->json([
                         'message' => 'Failed to send WhatsApp message',
