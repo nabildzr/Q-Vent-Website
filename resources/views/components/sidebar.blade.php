@@ -3,7 +3,7 @@
         <iconify-icon icon="radix-icons:cross-2"></iconify-icon>
     </button>
     <div>
-        <a href="index.html" class="sidebar-logo">
+        <a href="{{ route('admin.dashboard.index') }}" class="sidebar-logo">
             <img src="{{ asset('assets/images/logo.png') }}" alt="site logo" class="light-logo">
             <img src="{{ asset('assets/images/logo-light.png') }}" alt="site logo" class="dark-logo">
             <img src="{{ asset('assets/images/logo-icon.png') }}" alt="site logo" class="logo-icon">
@@ -68,6 +68,23 @@
                         <a href="{{ route('admin.trash.attendees.index') }}"><i
                                 class="ri-circle-fill circle-icon text-success-600 w-auto"></i>
                             Trash Attendees</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="dropdown my-2">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="ix:history-list" class="menu-icon"></iconify-icon>
+                    <span>Logs</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="#"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i>
+                            User Log</a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="ri-circle-fill circle-icon text-secondary-600 w-auto"></i>
+                            Qr Code Log</a>
                     </li>
                 </ul>
             </li>

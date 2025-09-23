@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
@@ -62,6 +63,11 @@ Route::prefix('admin')->middleware(['auth', 'can:isSuperOrAdmin'])->group(functi
     Route::resource('/', DashboardController::class)->names(names: [
         'index' => 'admin.dashboard.index',
     ]);
+
+    Route::get('/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password');
 
     Route::resource('/user', UserController::class)->names([
         'index' => 'admin.user.index',

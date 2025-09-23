@@ -137,8 +137,18 @@
                  <div class="dropdown">
                      <button class="d-flex justify-content-center align-items-center rounded-circle" type="button"
                          data-bs-toggle="dropdown">
-                         <img src="{{ asset('assets/images/user.png') }}" alt="image"
-                             class="w-40-px h-40-px object-fit-cover rounded-circle">
+                         @php
+                             $authUser = Auth::user();
+                             $avatarUrl =
+                                 $authUser && $authUser->avatar_url
+                                     ? $authUser->avatar_url
+                                     : 'https://ui-avatars.com/api/?name=' . urlencode($authUser?->name ?? 'Guest');
+                         @endphp
+
+                         <img src="{{ $avatarUrl }}" alt="Profile"
+                             class="w-40-px h-40-px object-fit-cover rounded-circle"
+                             onerror="this.onerror=null;this.src='{{ asset('assets/images/user.png') }}';">
+
                      </button>
                      <div class="dropdown-menu to-top dropdown-menu-sm">
                          <div
@@ -148,6 +158,7 @@
                                      {{ Auth::check() ? Auth::user()->name : 'Guest' }}
                                  </h6>
                                  <span class="text-secondary-light fw-medium text-sm">
+
                                      {{ Auth::check() ? ucwords(str_replace('_', ' ', Auth::user()->role)) : '-' }}
                                  </span>
                              </div>
@@ -158,7 +169,7 @@
                          <ul class="to-top-list">
                              <li>
                                  <a class="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
-                                     href="view-profile.html">
+                                     href="{{ route('admin.profile.show') }}">
                                      <iconify-icon icon="solar:user-linear" class="icon text-xl"></iconify-icon> My
                                      Profile</a>
                              </li>
