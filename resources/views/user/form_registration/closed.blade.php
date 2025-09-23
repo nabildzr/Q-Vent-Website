@@ -40,7 +40,7 @@
         </p>
 
         <p class="mt-3 text-gray-500 text-base">
-            Event: <span class="font-semibold text-gray-700">{{ $event->title }}</span>
+            Event: <span class="font-semibold text-gray-700">{{ $event->title ?? 'Event Tidak Ditemukan Atau Sudah Dihapus'}}</span>
         </p>
 
     </div>

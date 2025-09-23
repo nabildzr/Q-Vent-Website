@@ -3,10 +3,12 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventCategoryController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\AttendeeController;
+use App\Http\Controllers\TrashController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -58,9 +60,14 @@ Route::get('/protected/{token}', function ($token) {
 
 // ========== ROUTE UNTUK ADMIN ==========
 Route::prefix('admin')->middleware(['auth', 'can:isSuperOrAdmin'])->group(function () {
-    Route::resource('/', DashboardController::class)->names([
+    Route::resource('/', DashboardController::class)->names(names: [
         'index' => 'admin.dashboard.index',
     ]);
+
+    Route::get('/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password');
 
     Route::resource('/user', UserController::class)->names([
         'index' => 'admin.user.index',
@@ -109,4 +116,24 @@ Route::prefix('admin')->middleware(['auth', 'can:isSuperOrAdmin'])->group(functi
         'update' => 'admin.attendee.update',
         'destroy' => 'admin.attendee.destroy',
     ])->except(['index']);
+
+    // ========== ROUTE UNTUK TRASH ==========
+    Route::prefix('trash')->name('admin.trash.')->group(function () {
+        // --- hanya super_admin ---
+        Route::middleware('can:isSuperAdmin')->group(function () {
+            Route::get('events', [TrashController::class, 'events'])->name('events');
+            Route::get('categories', [TrashController::class, 'categories'])->name('categories');
+            Route::get('users', [TrashController::class, 'users'])->name('users');
+        });
+
+        // --- super_admin + admin (khusus attendees) ---
+        Route::prefix('attendees')->name('attendees.')->group(function () {
+            Route::get('/', [TrashController::class, 'attendeesIndex'])->name('index'); // list event yg punya attendee terhapus
+            Route::get('{event}', [TrashController::class, 'attendeesShow'])->name('show'); // list attendees per event
+        });
+
+        // Aksi umum restore / force delete
+        Route::post('{type}/{id}/restore', [TrashController::class, 'restore'])->name('restore');
+        Route::delete('{type}/{id}/force-delete', [TrashController::class, 'forceDelete'])->name('forceDelete');
+    });
 });

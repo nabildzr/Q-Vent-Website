@@ -47,20 +47,33 @@ class EventRegistrationController extends Controller
         // sync dulu status link expired
         $this->autoUpdateRegistrationLinkStatus();
 
-        $registrationLink = EventRegistrationLink::where('link', $link)->first();
+        $registrationLink = EventRegistrationLink::with('event')->where('link', $link)->first();
 
-        if (!$registrationLink) {
-            abort(404, 'Link tidak ditemukan.');
+        // Kalau link gak ada atau event-nya udah dihapus
+        if (!$registrationLink || !$registrationLink->event) {
+            return response()->view('user.form_registration.closed', [
+                'event' => null,
+                'message' => 'Event tidak tersedia atau sudah dihapus.'
+            ]);
         }
 
+        $event = $registrationLink->event;
+
+        // Kalau event-nya sudah selesai atau dibatalkan
+        if (in_array($event->status, ['done', 'cancelled'])) {
+            return response()->view('user.form_registration.closed', [
+                'event' => $event,
+                'message' => 'Event sudah selesai atau dibatalkan.'
+            ]);
+        }
+
+        // Kalau link-nya sudah ditutup
         if ($registrationLink->status === 'closed') {
             return response()->view('user.form_registration.closed', [
                 'event' => $registrationLink->event,
                 'message' => 'Pendaftaran untuk event ini sudah ditutup.'
             ]);
         }
-
-        $event = $registrationLink->event;
 
         $defaultConfig = DefaultInputRegistrationStatus::where('event_id', $event->id)->first();
         $documentLabel = 'Dokumen Tambahan';
@@ -207,7 +220,12 @@ class EventRegistrationController extends Controller
             $rules['input_document'] = 'nullable|file|mimes:pdf,jpg,png|max:2048';
 
         foreach ($customInputs as $input) {
-            $rules['custom.' . $input->name] = $input->is_required ? 'required|string' : 'nullable|string';
+            if ($input->type === 'select_multiple') {
+                $rules['custom.' . $input->name] = $input->is_required ? 'required|array' : 'nullable|array';
+                $rules['custom.' . $input->name . '.*'] = 'string';
+            } else {
+                $rules['custom.' . $input->name] = $input->is_required ? 'required|string' : 'nullable|string';
+            }
         }
 
         $validated = $request->validate($rules);
@@ -246,7 +264,7 @@ class EventRegistrationController extends Controller
         Attendance::create([
             'attendee_id' => $attendee->id,
             'event_id' => $event->id,
-            'status' => 'present',
+            'status' => 'absent',
             'check_in_time' => null,
             'notes' => null,
         ]);
@@ -265,7 +283,7 @@ class EventRegistrationController extends Controller
             'event_id' => $event->id,
             'attendee_id' => $attendee->id,
             'qrcode_data' => $qrcodeData,
-            'valid_until' => now()->addDays(7),
+            'valid_until' => now()->addDays(7), // QR valid 7 hari
         ]);
 
         // Simpan log setelah QR code dibuat
@@ -280,7 +298,13 @@ class EventRegistrationController extends Controller
         $customValues = $request->input('custom', []);
         foreach ($customInputs as $input) {
             $value = $customValues[$input->name] ?? null;
+
             if ($value !== null) {
+                // kalau multiple → gabung jadi string
+                if (is_array($value)) {
+                    $value = implode(', ', $value);
+                }
+
                 CustomInputRegistrationValue::create([
                     'custom_input_id' => $input->id,
                     'event_id' => $event->id,
@@ -429,6 +453,7 @@ class EventRegistrationController extends Controller
                     'event_id' => $event->id,
                     'name' => $data['name'],
                     'type' => $data['type'],
+                    'options' => $data['options'] ?? null,
                     'status' => $status,
                     'created_by' => Auth::id(),
                     'updated_by' => Auth::id(),
@@ -454,6 +479,8 @@ class EventRegistrationController extends Controller
                 ->delete();
         }
 
-        return redirect()->back()->with('success', 'Pengaturan input berhasil diperbarui.');
+        return redirect()
+            ->route('admin.event.show', $event->id)
+            ->with('success', 'Pengaturan input berhasil diperbarui.');
     }
 }

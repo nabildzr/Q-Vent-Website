@@ -274,13 +274,11 @@
                             <input type="text" name="link" class="form-control" id="link"
                                 value="{{ $event->registrationLink->link ?? '' }}" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="valid_until" class="form-label">Valid Until</label>
-                            <input type="text" name="valid_until" class="form-control flatpickr-datetime"
-                                id="valid_until"
+                        <div class="mb-3 d-flex flex-column">
+                            <label for="valid_until" class="form-label mb-2">Valid Until</label>
+                            <input type="text" name="valid_until" id="valid_until" class="form-control"
                                 value="{{ optional($event->registrationLink->valid_until)->format('Y-m-d H:i') }}"
-                                placeholder="Pilih Tanggal dan Waktu untuk kadaluarsa link"
-                                required>
+                                placeholder="Pilih tanggal & waktu" readonly>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -305,12 +303,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Flatpickr configuration for valid_until
             flatpickr("#valid_until", {
                 enableTime: true,
-                dateFormat: "Y-m-d\\TH:i",
+                dateFormat: "Y-m-d H:i",
                 time_24hr: true,
                 locale: "id",
-                defaultDate: "{{ optional($event->registrationLink->valid_until)->format('Y-m-d H:i') }}"
+                allowInput: false,
+                enableSeconds: false,
+                defaultDate: "{{ $event->registrationLink->valid_until ?? '' }}", // Menampilkan data sebelumnya
+                noCalendar: false,
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                minuteIncrement: 1, // Bisa input menit tanpa increment
+                hourIncrement: 1, // Bisa input jam tanpa increment
+                // Konfigurasi tampilan waktu
+                static: true,
+                inline: false,
+                position: "auto"
             });
         });
 

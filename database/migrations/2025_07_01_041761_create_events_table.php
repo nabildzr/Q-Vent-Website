@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->string('location');
-            $table->foreignId('event_category_id')->nullable()->constrained('event_categories')->nullOnDelete();
+            $table->foreignId('event_category_id')->nullable()->constrained('event_categories')->restrictOnDelete();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->enum('status', [
                 'active',

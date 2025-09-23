@@ -15,6 +15,7 @@ class CustomInputRegistration extends Model
         'event_id',
         'name',
         'type',
+        'options',
         'created_by',
         'updated_by',
         'status',

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
             $table->text('name');
             $table->text('type');
+            $table->text('options')->nullable();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->foreignId('updated_by')->constrained('users')->cascadeOnDelete();
             $table->boolean('status')->default(false);
