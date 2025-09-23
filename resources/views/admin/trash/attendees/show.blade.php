@@ -78,7 +78,7 @@
                                 />
                             @empty
                                 <tr>
-                                    <td colspan="6">Tidak ada attendee terhapus.</td>
+                                    <td colspan="1">Tidak ada attendee terhapus.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -91,6 +91,8 @@
 
 @section('beforeAppScripts')
     <script>
-        let table = new DataTable('#dataTable');
+        let table = new DataTable('#dataTable', {
+            order: [[0, 'desc']]
+        });
     </script>
 @endsection

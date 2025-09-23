@@ -76,6 +76,7 @@
     <script>
         let table = new DataTable('#dataTable', {
             order: false,
+            order: [[0, 'desc']] 
         });
     </script>
 @endsection

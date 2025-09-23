@@ -18,6 +18,7 @@ class DefaultInputRegistrationStatus extends Model
         'input_last_name',
         'input_email',
         'input_phone_number',
+        'show_qr',
     ];
 
     public function event()

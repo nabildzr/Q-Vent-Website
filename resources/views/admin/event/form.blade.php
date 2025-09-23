@@ -145,6 +145,10 @@
                             </label>
                         </div>
 
+                        @error('banner')
+                            <div style="color:red">{{ $message }}</div>
+                        @enderror
+
                         {{-- QR Logo Upload --}}
                         <div class="upload-image-wrapper d-flex align-items-center gap-4">
                             {{-- Preview gambar yang sudah diupload --}}

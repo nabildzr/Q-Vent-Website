@@ -19,6 +19,7 @@ return new class extends Migration
             $table->boolean('input_last_name')->default(true);
             $table->boolean('input_email')->default(true);
             $table->boolean('input_phone_number')->default(true);
+            $table->boolean('show_qr')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

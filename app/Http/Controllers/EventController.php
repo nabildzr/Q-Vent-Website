@@ -64,17 +64,38 @@ class EventController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required',
-            'description' => 'required|max:255',
-            'location' => 'required',
+            'title' => 'required|string|max:100',
+            'description' => 'required|string|max:255',
+            'location' => 'required|string|max:150',
             'event_category_id' => 'required|exists:event_categories,id',
             'start_date' => 'required|date_format:Y-m-d\TH:i',
             'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
-            'banner' => 'nullable|image|max:2048',
-            'qr_logo' => 'nullable|image|max:2048',
-            'admins' => 'nullable|array',
+            'banner' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'qr_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'admins' => 'required|array|min:1',
             'admins.*' => 'exists:users,id',
-            'photos.*' => 'nullable|image|max:2048',
+            'photos' => 'nullable|array',
+            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'title.required' => 'Judul event wajib diisi.',
+            'title.max' => 'Judul event maksimal 100 karakter.',
+            'description.required' => 'Deskripsi event wajib diisi.',
+            'description.max' => 'Deskripsi event maksimal 255 karakter.',
+            'location.required' => 'Lokasi event wajib diisi.',
+            'location.max' => 'Lokasi event maksimal 150 karakter.',
+            'event_category_id.required' => 'Kategori event wajib dipilih.',
+            'start_date.required' => 'Tanggal mulai wajib diisi.',
+            'end_date.required' => 'Tanggal selesai wajib diisi.',
+            'end_date.after_or_equal' => 'Tanggal selesai harus setelah atau sama dengan tanggal mulai.',
+            'banner.required' => 'Banner event wajib diunggah.',
+            'banner.image' => 'Banner harus berupa gambar.',
+            'banner.max' => 'Ukuran banner maksimal 2MB.',
+            'qr_logo.image' => 'QR Logo harus berupa gambar.',
+            'qr_logo.max' => 'Ukuran QR Logo maksimal 2MB.',
+            'admins.required' => 'Minimal harus ada satu admin pendamping.',
+            'admins.*.exists' => 'Admin yang dipilih tidak valid.',
+            'photos.*.image' => 'Setiap foto harus berupa gambar.',
+            'photos.*.max' => 'Ukuran setiap foto maksimal 2MB.',
         ]);
 
         // Upload banner
@@ -132,6 +153,7 @@ class EventController extends Controller
             'input_email' => true,
             'input_phone_number' => true,
             'input_document' => false,
+            'show_qr' => false,
         ]);
 
         // Simpan admin pendamping (jika ada)

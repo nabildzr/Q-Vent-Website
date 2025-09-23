@@ -50,7 +50,7 @@
 
                             @if ($categories->isEmpty())
                                 <tr>
-                                    <td colspan="3">Belum ada kategori event.</td>
+                                    <td colspan="1">Belum ada kategori event.</td>
                                 </tr>
                             @endif
                         </tbody>
@@ -63,6 +63,8 @@
 
 @section('beforeAppScripts')
     <script>
-        let table = new DataTable('#dataTable');
+        let table = new DataTable('#dataTable', {
+            order: [[0, 'desc']] 
+        });
     </script>
 @endsection

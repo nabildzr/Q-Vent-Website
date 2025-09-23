@@ -85,7 +85,7 @@
                                 />
                             @empty
                                 <tr>
-                                    <td colspan="7">Tidak ada event di trash.</td>
+                                    <td colspan="1">Tidak ada event di trash.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -98,6 +98,8 @@
 
 @section('beforeAppScripts')
     <script>
-        let table = new DataTable('#dataTable');
+        let table = new DataTable('#dataTable', {
+            order: [[0, 'desc']]
+        });
     </script>
 @endsection

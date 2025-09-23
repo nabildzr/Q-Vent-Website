@@ -246,7 +246,7 @@ class EventRegistrationController extends Controller
 
         // Simpan attendee
         $attendee = Attendee::create([
-            'event_id' => $event->id,
+            'event_id' => $eventId,
             'first_name' => $request->first_name ?? null,
             'last_name' => $request->last_name ?? null,
             'email' => $request->email ?? null,
@@ -263,14 +263,14 @@ class EventRegistrationController extends Controller
         // Simpan attendance record
         Attendance::create([
             'attendee_id' => $attendee->id,
-            'event_id' => $event->id,
+            'event_id' => $eventId,
             'status' => 'absent',
             'check_in_time' => null,
             'notes' => null,
         ]);
 
         // Generate data QR
-        $qrcodeData = $attendee->id . $attendee->code . 'event' . $event->id;
+        $qrcodeData = $attendee->id . $attendee->code . 'event' . $eventId;
         $namePart = $attendee->first_name ?: $attendee->last_name ?: 'QR';
         $namePart = preg_replace('/[^A-Za-z0-9_\-]/', '_', $namePart);
         $qrFilename = 'QR_' . $attendee->id . '_' . $namePart . '_' . $attendee->code . '.png';
@@ -280,10 +280,10 @@ class EventRegistrationController extends Controller
 
         // Simpan QR data ke tabel qr_codes
         $qrCode = QRCode::create([
-            'event_id' => $event->id,
+            'event_id' => $eventId,
             'attendee_id' => $attendee->id,
             'qrcode_data' => $qrcodeData,
-            'valid_until' => now()->addDays(7), // QR valid 7 hari
+            'valid_until' => $event->end_date,
         ]);
 
         // Simpan log setelah QR code dibuat
@@ -307,7 +307,7 @@ class EventRegistrationController extends Controller
 
                 CustomInputRegistrationValue::create([
                     'custom_input_id' => $input->id,
-                    'event_id' => $event->id,
+                    'event_id' => $eventId,
                     'attendee_id' => $attendee->id,
                     'name' => $input->name,
                     'value' => $value,
@@ -387,11 +387,14 @@ class EventRegistrationController extends Controller
             ]);
         }
 
-        // Default return → thankyou page tanpa QR (karena udah dikirim via email/WA)
+        $defaultConfig = DefaultInputRegistrationStatus::where('event_id', $eventId)->first();
+        $showQrOnPage = $defaultConfig->show_qr ?? false;
+
         return view('user.form_registration.thankyou', [
             'event' => $event,
-            'showQr' => false,
-            'qrData' => null
+            'attendee' => $attendee,
+            'showQr' => $showQrOnPage,
+            'qrData' => $qrResult['dataUri'] ?? null
         ]);
     }
 
@@ -423,6 +426,7 @@ class EventRegistrationController extends Controller
                 'input_last_name' => $request->has('input_last_name'),
                 'input_email' => $request->has('input_email'),
                 'input_phone_number' => $request->has('input_phone_number'),
+                'show_qr' => $request->has('show_qr'),
             ]
         );
 
