@@ -391,7 +391,7 @@ class AttendanceService
 
       foreach ($attendeesData as $attendeeData) {
         $attendeeId = $attendeeData['id'];
-        // Laravel best practice: konsistensi kapitalisasi status
+        // Laravel best practice: consistent status capitalization
         $status = strtolower($attendeeData['status']) === 'present' ? 'Present' : 'Absent';
 
         // Check if attendee belongs to this event
