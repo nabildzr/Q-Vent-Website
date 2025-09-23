@@ -35,21 +35,27 @@
                             <ul>
                                 <li class="d-flex align-items-center gap-1 mb-12">
                                     <span class="w-30 text-md fw-semibold text-primary-light">Full Name</span>
-                                    <span class="w-70 text-secondary-light fw-medium">: {{ $user->name }}</span>
+                                    <span class="w-70 text-secondary-light fw-medium text-truncate" style="max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        : {{ $user->name }}
+                                    </span>
                                 </li>
                                 <li class="d-flex align-items-center gap-1 mb-12">
                                     <span class="w-30 text-md fw-semibold text-primary-light">Email</span>
-                                    <span class="w-70 text-secondary-light fw-medium">: {{ $user->email }}</span>
+                                    <span class="w-70 text-secondary-light fw-medium text-truncate" style="max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        : {{ $user->email }}
+                                    </span>
                                 </li>
                                 <li class="d-flex align-items-center gap-1 mb-12">
                                     <span class="w-30 text-md fw-semibold text-primary-light">Phone Number</span>
-                                    <span class="w-70 text-secondary-light fw-medium">:
-                                        {{ $user->phone_number ?? '-' }}</span>
+                                    <span class="w-70 text-secondary-light fw-medium text-truncate" style="max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        : {{ $user->phone_number ?? '-' }}
+                                    </span>
                                 </li>
                                 <li class="d-flex align-items-center gap-1 mb-12">
                                     <span class="w-30 text-md fw-semibold text-primary-light">Role</span>
-                                    <span class="w-70 text-secondary-light fw-medium">:
-                                        {{ ucwords(str_replace('_', ' ', $user->role)) }}</span>
+                                    <span class="w-70 text-secondary-light fw-medium text-truncate" style="max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        : {{ ucwords(str_replace('_', ' ', $user->role)) }}
+                                    </span>
                                 </li>
                             </ul>
                         </div>
@@ -60,11 +66,11 @@
             <div class="col-lg-8">
                 <div class="card h-100">
                     <div class="card-body p-24">
-                        <div class="text-center mb-24">
+                        {{-- <div class="text-center mb-24">
                             <img src="{{ $avatarUrl }}" alt="Profile"
                                 class="w-36 h-36 rounded-full border-4 border-white shadow-lg object-cover"
                                 onerror="this.onerror=null; this.src='{{ asset('assets/images/user.png') }}';">
-                        </div>
+                        </div> --}}
 
                         <ul class="nav border-gradient-tab nav-pills mb-20 d-inline-flex" id="pills-tab" role="tablist">
                             <li class="nav-item" role="presentation">

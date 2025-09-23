@@ -9,8 +9,6 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->count(10)->create();
-
         User::create([
             'name' => 'Nazriel Super Admin',
             'email' => 'mnazrielalamsyah25@gmail.com',
@@ -18,5 +16,7 @@ class UserSeeder extends Seeder
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
             'phone_number' => '62878999222',
         ]);
+        
+        User::factory()->count(10)->create();
     }
 }

@@ -29,11 +29,16 @@ class DashboardController extends Controller
         // Pisahkan event berdasarkan waktu/status
         $now = Carbon::now();
 
-        $eventUpcoming = $events->filter(fn($e) => Carbon::parse($e->start_date)->isFuture());
-        $eventOngoing = $events->filter(fn($e) =>
+        $eventUpcoming = $events->filter(fn($e) => Carbon::parse($e->start_date)->isFuture())
+            ->sortBy(fn($e) => Carbon::parse($e->start_date)); // start_date asc
+
+        $eventOngoing = $events->filter(
+            fn($e) =>
             Carbon::parse($e->start_date)->lte($now) && Carbon::parse($e->end_date)->gte($now)
-        );
-        $eventPast = $events->filter(fn($e) => Carbon::parse($e->end_date)->lt($now));
+        )->sortBy(fn($e) => Carbon::parse($e->end_date)); // end_date asc
+
+        $eventPast = $events->filter(fn($e) => Carbon::parse($e->end_date)->lt($now))
+            ->sortByDesc(fn($e) => Carbon::parse($e->end_date)); // end_date desc
 
         // Count sesuai kebutuhan
         $countEventDone = $events->where('status', 'done')->count();

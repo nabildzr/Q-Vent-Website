@@ -69,7 +69,7 @@
                                 />
                             @empty
                                 <tr>
-                                    <td colspan="4">Tidak ada kategori di trash.</td>
+                                    <td colspan="1">Tidak ada kategori di trash.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -82,6 +82,8 @@
 
 @section('beforeAppScripts')
     <script>
-        let table = new DataTable('#dataTable');
+        let table = new DataTable('#dataTable', {
+            order: [[0, 'desc']]
+        });
     </script>
 @endsection

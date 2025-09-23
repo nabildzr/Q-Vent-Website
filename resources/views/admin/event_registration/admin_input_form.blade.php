@@ -59,6 +59,15 @@
                             </label>
                         </div>
                     @endforeach
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label d-flex justify-content-between align-items-center">
+                            Tampilkan QR Setelah Registrasi
+                            <div class="form-switch switch-primary d-flex align-items-center gap-3">
+                                <input class="form-check-input" type="checkbox" id="show_qr_toggle" name="show_qr"
+                                    value="1" {{ $defaultInputs->show_qr ? 'checked' : '' }}>
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -217,14 +226,34 @@
         let customInputIndex = 999;
 
         document.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('custom-input-container');
-            originalHTML = container.innerHTML;
+            const emailCheckbox = document.getElementById('input_email');
+            const phoneCheckbox = document.getElementById('input_phone_number');
+            const showQrToggle = document.getElementById('show_qr_toggle');
 
-            // intercept submit form
-            document.getElementById('input-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                new bootstrap.Modal(document.getElementById('saveModal')).show();
-            });
+            function updateShowQrState() {
+                const emailActive = emailCheckbox.checked;
+                const phoneActive = phoneCheckbox.checked;
+
+                if (!emailActive && !phoneActive) {
+                    // Kalau email & phone OFF, paksa show QR ON & disable
+                    showQrToggle.checked = true;
+                    showQrToggle.disabled = true;
+                } else {
+                    // Kalau salah satu ada, bisa di ON/OFF
+                    showQrToggle.disabled = false;
+                }
+
+                // Jika email/phone baru saja diaktifkan, matikan show QR otomatis
+                if (emailActive || phoneActive) {
+                    showQrToggle.checked = false;
+                }
+            }
+
+            emailCheckbox.addEventListener('change', updateShowQrState);
+            phoneCheckbox.addEventListener('change', updateShowQrState);
+
+            // Jalankan sekali saat load page
+            updateShowQrState();
         });
 
         // Konfirmasi simpan

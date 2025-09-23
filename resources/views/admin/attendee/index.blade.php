@@ -91,7 +91,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7">Belum ada attendee.</td>
+                                    <td colspan="1">Belum ada attendee.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -104,6 +104,8 @@
 
 @section('beforeAppScripts')
     <script>
-        let table = new DataTable('#dataTable');
+        let table = new DataTable('#dataTable', {
+            order: [[0, 'desc']] 
+        });
     </script>
 @endsection
